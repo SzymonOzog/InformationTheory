@@ -68,4 +68,52 @@ class CommunicationSystem(Scene):
         
     
 
+class BinarySymmetricChannel(Scene):
+    def construct(self):
+        title = Tex("Binary Symmetric Channel").scale(1.5)
+        self.play(Write(title))
+        self.wait(1)
+        self.play(FadeOut(title))
+
+        input_bit_0 = Circle(radius=0.5, color=BLUE).shift(3*LEFT + 2*UP)
+        input_bit_1 = Circle(radius=0.5, color=BLUE).shift(3*LEFT + 2*DOWN)
+
+        input_0_text = Tex("0").scale(1.5).move_to(input_bit_0.get_center())
+        input_1_text = Tex("1").scale(1.5).move_to(input_bit_1.get_center())
+
+        output_bit_0 = Circle(radius=0.5, color=BLUE).shift(3*RIGHT + 2*UP)
+        output_bit_1 = Circle(radius=0.5, color=BLUE).shift(3*RIGHT + 2*DOWN)
+
+        output_0_text = Tex("0").scale(1.5).move_to(output_bit_0.get_center())
+        output_1_text = Tex("1").scale(1.5).move_to(output_bit_1.get_center())
+
+        self.play(
+            Create(input_bit_0), Write(input_0_text),
+            Create(input_bit_1), Write(input_1_text),
+            Create(output_bit_0), Write(output_0_text),
+            Create(output_bit_1), Write(output_1_text),
+        )
+        self.wait(1)
+        
+        arrow_00 = Arrow(start=input_bit_0.get_right(), end=output_bit_0.get_left(), buff=0.25, color=GREEN)
+        arrow_01 = Arrow(start=input_bit_0.get_right(), end=output_bit_1.get_left(), buff=0.25, color=RED)
+
+        arrow_10 = Arrow(start=input_bit_1.get_right(), end=output_bit_0.get_left(), buff=0.25, color=RED)
+        arrow_11 = Arrow(start=input_bit_1.get_right(), end=output_bit_1.get_left(), buff=0.25, color=GREEN)
+        
+        p_label = Tex("p").scale(1.5).shift(2*RIGHT + 2.5*UP)
+        one_minus_p_label = Tex("1-p").scale(1.5).shift(2*RIGHT + 0.5*UP)
+        
+        self.play(
+            Create(arrow_00), Write(one_minus_p_label),
+            Create(arrow_01), Write(p_label),
+        )
+        self.wait(1)
+
+        self.play(
+            Create(arrow_10), Write(one_minus_p_label.copy().shift(DOWN)),
+            Create(arrow_11), Write(p_label.copy().shift(5*DOWN)),
+        )
+        self.wait(1)
+
 
