@@ -4,15 +4,15 @@ from manim import *
 class CommunicationSystem(Scene):
     def construct(self):
         source = Square()
-        source.add(Text("Information\nSource", font_size=20))
+        source.add(Text("Information\nSource", font_size=20,))
         self.play(Create(source))
         self.wait(1)
         self.play(source.animate.shift(LEFT*3))
         
         transmitter = Square()
         transmitter.add(Text("Transmitter", font_size=20))
-        self.play(Create(transmitter))
         s_to_t = Arrow(source.get_right(), transmitter.get_left(), buff=0, max_stroke_width_to_length_ratio=1)
+        self.play(Create(transmitter))
         self.play(Create(s_to_t))
         
         group = Group(source, s_to_t, transmitter)
@@ -20,8 +20,8 @@ class CommunicationSystem(Scene):
 
         channel = Square()
         channel.add(Text("Channel", font_size=20))
-        self.add(channel)
         self.play(Create(Arrow(transmitter.get_right(), channel.get_left(), buff=0, max_stroke_width_to_length_ratio=1)))
+        self.play(Create(channel))
 
         receiver = Square()
         receiver.add(Text("Receiver", font_size=20))
@@ -37,13 +37,35 @@ class CommunicationSystem(Scene):
         self.play(Create(destination))
         self.wait(1)
 
-        noise = Square()
-        noise.add(Text("Noise", font_size=20))
+        for x in self.mobjects:
+            # if isinstance(x, Square):          
+                self.play(x.animate.set_color(GREEN))
+
+        noise = Square(color=RED)
+        noise.add(Text("Noise", font_size=20, color=RED))
         noise.shift(DOWN*3)
         self.play(Create(noise))
-        self.play(Create(Arrow( noise.get_top(), channel.get_bottom(), buff=0, max_stroke_width_to_length_ratio=1)))
+        self.play(Create(Arrow( noise.get_top(), channel.get_bottom(), buff=0, max_stroke_width_to_length_ratio=1, color=RED)))
+
+        for x in [channel, receiver, destination]:
+            self.play(x.animate.set_color(YELLOW))
+        
         self.wait(1)
 
+        # create an observer that sends error correcting data to the reciever
+        observer = Square(color=BLUE)
+        observer.add(Text("Observer", font_size=20, color=BLUE))
+        observer.shift(UP*3)
+        self.play(Create(observer))
+        self.play(Create(Arrow(channel.get_top(), observer.get_bottom(), buff=0, max_stroke_width_to_length_ratio=1, color=BLUE)))
+        print(observer.get_left())
+        self.play(Create(Line(observer.get_right(), np.array([receiver.get_top()[0], observer.get_right()[1], 0]), color=BLUE)))
+        self.play(Create(Arrow(np.array([receiver.get_top()[0], observer.get_right()[1], 0]), receiver.get_top(), color=BLUE, buff=0, max_stroke_width_to_length_ratio=1)))
+
+        for x in [receiver, destination]:
+            self.play(x.animate.set_color(GREEN))
+
+        
     
 
 
