@@ -65,8 +65,33 @@ class CommunicationSystem(Scene):
         for x in [receiver, destination]:
             self.play(x.animate.set_color(GREEN))
 
+def create_binary_digits(len):
+    return [bin(i)[2:].zfill(len) for i in range(2**len)]
+
+class InformationContent(Scene):
+    def construct(self):
+        title = Text("Information\nContent")
+        self.play(Write(title))
+        self.wait(1)
+        self.play(FadeOut(title))
         
-    
+        log = Tex("$\log_b N$")
+        self.play(Write(log))
+        self.wait(1)
+        self.play(log.animate.shift(2*RIGHT))
+        
+        binary_digits = [Tex(x) for x in create_binary_digits(2)]
+        
+        for i,b in enumerate(binary_digits):
+            self.play(Write(b))
+            self.play(b.animate.shift(2*LEFT + 2*UP + i*DOWN))
+
+        rect = SurroundingRectangle( Group(*binary_digits))
+        self.play(Create(rect))
+        self.play(Transform(log, Tex("$\log_2 4 = 2$").shift(2*RIGHT)))
+        self.wait(1)
+        self.play(Transform(rect, SurroundingRectangle(Group(*binary_digits[:2]))))
+        self.play(Transform(log, Tex("$\log_2 2 = 1$").shift(2*RIGHT)))
 
 class BinarySymmetricChannel(Scene):
     def construct(self):
