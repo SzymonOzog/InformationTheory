@@ -84,15 +84,29 @@ class InformationContent(Scene):
         
         for i,b in enumerate(binary_digits):
             self.play(Write(b))
-            self.play(b.animate.shift(2*LEFT + 2*UP + i*DOWN))
+            self.play(b.animate.shift(2*LEFT + 2*UP + i*0.5*DOWN))
 
         rect = SurroundingRectangle( Group(*binary_digits))
         self.play(Create(rect))
-        self.play(Transform(log, Tex("$\log_2 4 = 2$").shift(2*RIGHT)))
+        self.play(Transform(log, Tex("$\log$", "$_2$", "$4$", "$=$", "$2$").set_color_by_tex("_2", RED).shift(2*RIGHT)))
         self.wait(1)
         self.play(Transform(rect, SurroundingRectangle(Group(*binary_digits[:2]))))
-        self.play(Transform(log, Tex("$\log_2 2 = 1$").shift(2*RIGHT)))
+        self.play(Transform(log, Tex("$\log$", "$_2$", "$2$", "$=$", "$1$").set_color_by_tex("_2", RED).shift(2*RIGHT)))
+        
+        anims = []
+        for i,b in enumerate(create_binary_digits(3)):
+            if len(binary_digits)>i:
+                x = Tex(b).shift(2*LEFT + 2*UP + i*0.5*DOWN)
+                anims.append(Transform(binary_digits[i],x))
+                binary_digits[i] = x
+            else:
+                x = Tex(b).shift(2*LEFT + 2*UP + i*0.5*DOWN)
+                binary_digits.append(x)
+                anims.append(Write(x))
+        anims.append(Transform(rect, SurroundingRectangle(Group(*binary_digits[:2]))))
+        self.play(*anims)
 
+        self.wait(1)
 class BinarySymmetricChannel(Scene):
     def construct(self):
         title = Tex("Binary Symmetric Channel").scale(1.5)
