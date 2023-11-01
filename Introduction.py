@@ -191,6 +191,83 @@ class BinarySymmetricChannel(Scene):
             self.play(FadeIn(result, target_position=target))
 
 
+class Entropy(Scene):
+    def construct(self):
+        coin = Circle(radius=1, color=WHITE).shift(1.5*LEFT)
+        heads = Text("H", color=WHITE).scale(1.5).move_to(coin.get_center())
+        
+        coin2 = Circle(radius=1, color=WHITE).shift(1.5*RIGHT)
+        tails = Text("T", color=WHITE).scale(1.5).move_to(coin2.get_center())
+
+        self.play(FadeIn(coin), Write(heads))
+        self.play(FadeIn(coin2), Write(tails))
+        coin_flipping_text = Text("Flip a fair coin: Equally likely probabilities").shift(2*DOWN)
+        self.play(Write(coin_flipping_text))
+        self.wait(1)
+
+        entropy_formula_1 = Tex("$H(X) =$", "$-0.5 \cdot \log_2(0.5)$", "$- 0.5 \cdot \log_2(0.5)$").scale(0.8).next_to(coin_flipping_text, DOWN)
+        entropy_formula_1[1].set_color(BLUE)
+        entropy_formula_1[2].set_color(RED)
+
+        self.play(Write(entropy_formula_1))
+        self.wait(2)
+
+        # fade away all objects
+        self.play(FadeOut(entropy_formula_1), FadeOut(coin), FadeOut(heads), FadeOut(coin_flipping_text), FadeOut(coin2), FadeOut(tails))
+
+
+        # Non equally likely probabilities
+        columns = 5
+        n_balls = 10
+        balls = [Dot(color=BLUE if i < 7 else RED).move_to((i%columns) * RIGHT + (i//columns)*DOWN + 2*LEFT) for i in range(n_balls)]
+        self.play(FadeIn(*balls))
+
+        ball_text = Text("Pick a ball: Non equally likely probabilities").shift(3*DOWN)
+        self.play(Write(ball_text))
+        self.wait(1)
+
+        entropy_formula_2 = Tex("$H(X) =$", "$-0.7 \cdot \log_2(0.7)$", "$- 0.3 \cdot \log_2(0.3)$").scale(0.8).next_to(ball_text, DOWN)
+        entropy_formula_2[1].set_color(BLUE)
+        entropy_formula_2[2].set_color(RED)
+
+        self.play(Write(entropy_formula_2))
+        self.wait(2)
+
+        # fade away all objects
+        self.play(FadeOut(entropy_formula_2), FadeOut(*balls), FadeOut(ball_text))
+
+        # Binary Entropy Formula
+        binary_entropy_formula = Tex("$H_b(p) =$", "$-p \cdot \log_2(p)$", "$- (1-p) \cdot \log_2(1-p)$").shift(2*DOWN)
+        self.play(Write(binary_entropy_formula))
+        self.wait(2)
+
+        # H(p) Chart
+        axes = Axes(
+            x_range=[0, 1, 0.1],
+            y_range=[0, 1.1, 0.1],
+            axis_config={"color": BLUE},
+            x_length=7,
+            y_length=4
+        ).shift(UP)
+
+        # Creating curve for y = -plog2(p) - (1-p)log2(1-p)
+        graph = axes.plot(
+            lambda x: -x * np.log2(x) - (1-x) * np.log2(1-x) if 0 < x < 1 else 0,
+            color=WHITE
+        )
+        labels = axes.get_axis_labels("p", "H(p)")
+        self.play(
+            Create(axes), 
+            Create(graph), 
+            Write(labels)
+        )
+        self.wait(2)
+
+        # General Entropy Formula
+        general_entropy_formula = Tex("$H(X) =$", "$\sum p(x) \cdot \log_2\\left(\\frac{1}{p(x)}\\right)$").scale(0.9).next_to(binary_entropy_formula, DOWN)
+        self.play(Write(general_entropy_formula))
+        self.wait(3)
+
 class EntropyBoxRepresentation(Scene):
     def construct(self):
         joint_entropy_box = Rectangle(width=8, height=1, color=WHITE).shift(UP)
