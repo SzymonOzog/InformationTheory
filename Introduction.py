@@ -1,5 +1,5 @@
 from manim import *
-
+from random import random 
 
 class CommunicationSystem(Scene):
     def construct(self):
@@ -154,6 +154,40 @@ class BinarySymmetricChannel(Scene):
             Create(arrow_11), Write(p_label.copy().shift(5*DOWN)),
         )
         self.wait(1)
+
+        input_string = "1000101"
+        input_text = [Tex(bit).shift((5-0.3*i)*LEFT) for i, bit in enumerate(input_string)]
+        
+        for t in input_text:
+            self.play(Write(t))
+
+
+        for i,( bit, text) in enumerate(zip(input_string, input_text)):
+            source = input_bit_0.get_center() if bit == "0" else input_bit_1.get_center()
+            prob = np.random.rand()
+            print(prob)
+            if bit == "0":
+                target = output_bit_1.get_center() if prob < 0.1 else output_bit_0.get_center()  
+            else:
+                target = output_bit_0.get_center() if prob < 0.1 else output_bit_1.get_center()
+
+            resulting_bit = "0" if (target == output_bit_0.get_center()).all() else "1"
+
+            self.play(FadeOut(text.copy(), target_position=source))
+
+            def animate(arrow): self.play(ShowPassingFlash(arrow.copy().set_color(BLUE)))
+
+            if resulting_bit == "0" and bit == "0":
+                animate(arrow_00)
+            elif resulting_bit == "1" and bit == "0":
+                animate(arrow_01)
+            elif resulting_bit == "0" and bit == "1":
+                animate(arrow_10)
+            else:
+                animate(arrow_11)
+
+            result = Tex(resulting_bit, color=GREEN if resulting_bit == bit else RED).move_to((4+0.3*i)*RIGHT)
+            self.play(FadeIn(result, target_position=target))
 
 class EntropyBoxRepresentation(Scene):
     def construct(self):
