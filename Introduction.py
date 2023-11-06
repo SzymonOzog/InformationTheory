@@ -250,9 +250,16 @@ class Entropy(Scene):
             y_length=4
         ).shift(UP)
 
+        t = ValueTracker(0)
+        func = lambda x: -x * np.log2(x) - (1-x) * np.log2(1-x) if 0 < x < 1 else 0
+        initial_point = [axes.coords_to_point(t.get_value(), func(t.get_value()))]
+        dot = Dot(point=initial_point)
+
+        dot.add_updater(lambda x: x.move_to(axes.c2p(t.get_value(), func(t.get_value()))))
+
         # Creating curve for y = -plog2(p) - (1-p)log2(1-p)
         graph = axes.plot(
-            lambda x: -x * np.log2(x) - (1-x) * np.log2(1-x) if 0 < x < 1 else 0,
+            func,
             color=WHITE
         )
         labels = axes.get_axis_labels("p", "H(p)")
@@ -262,6 +269,21 @@ class Entropy(Scene):
             Write(labels)
         )
         self.wait(2)
+
+        self.play(Create(dot))
+
+        self.play(t.animate.set_value(0.5))
+        self.play(Transform(binary_entropy_formula, Tex("$H_b(0.5) =$", "$-0.5 \cdot \log_2(0.5)$", "$- (1-0.5) \cdot \log_2(1-0.5)$", "$=1$").shift(2*DOWN)))
+
+        self.wait(2)
+
+        self.play(t.animate.set_value(0))
+        self.play(Transform(binary_entropy_formula, Tex("$H_b(0) =$", "$-0 \cdot \log_2(0)$", "$- (1-0) \cdot \log_2(1-0)$", "$=0$").shift(2*DOWN)))
+
+        self.wait(2)
+
+        #fade out everything
+        self.play(FadeOut(axes), FadeOut(graph), FadeOut(labels), FadeOut(dot), FadeOut(binary_entropy_formula))
 
         # General Entropy Formula
         general_entropy_formula = Tex("$H(X) =$", "$\sum p(x) \cdot \log_2\\left(\\frac{1}{p(x)}\\right)$").scale(0.9).next_to(binary_entropy_formula, DOWN)
