@@ -294,9 +294,22 @@ class Entropy(Scene):
         self.play(FadeOut(axes), FadeOut(graph), FadeOut(labels), FadeOut(dot), FadeOut(binary_entropy_formula))
 
         # General Entropy Formula
-        general_entropy_formula = Tex("$H(X) =$", "$\sum p(x) \cdot \log_2\\left(\\frac{1}{p(x)}\\right)$").scale(0.9).next_to(binary_entropy_formula, DOWN)
+        general_entropy_formula = Tex("$H(X) =$", "$\sum p(x) \cdot \log_2\\left(\\frac{1}{p(x)}\\right)$").scale(0.9).next_to(ball_text, UP)
         self.play(Write(general_entropy_formula))
         self.wait(3)
+
+        self.play(FadeIn(entropy_formula_2.shift(UP)), FadeIn(*balls))
+        new_balls = [Dot(color=GREEN).move_to(balls[0].get_center() + UP + i * RIGHT) for i in range(5)]
+        self.play(FadeIn(*new_balls))
+        updated_entropy_formula_2 = Tex("$H(X) =$", "$-\\frac{7}{15} \cdot \log_2(\\frac{7}{15})$", "$- \\frac{3}{15} \cdot \log_2(\\frac{3}{15})$", "$- \\frac{5}{15} \cdot \log_2(\\frac{3}{15})$").scale(0.8).move_to(ball_text.get_center())
+        updated_entropy_formula_2[1].set_color(BLUE)
+        updated_entropy_formula_2[2].set_color(RED)
+        updated_entropy_formula_2[3].set_color(GREEN)
+        self.play(Transform(entropy_formula_2,updated_entropy_formula_2))
+
+
+        self.wait(1)
+        
 
 class EntropyBoxRepresentation(Scene):
     def construct(self):
