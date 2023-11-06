@@ -243,9 +243,11 @@ class Entropy(Scene):
 
         # H(p) Chart
         axes = Axes(
-            x_range=[0, 1, 0.1],
-            y_range=[0, 1.1, 0.1],
+            x_range=[0, 1.2, 0.1],
+            y_range=[0, 1.2, 0.1],
             axis_config={"color": BLUE},
+            x_axis_config={"numbers_to_include": [0, 0.5, 1]},
+            y_axis_config={"numbers_to_include": [0, 1]},
             x_length=7,
             y_length=4
         ).shift(UP)
@@ -260,7 +262,8 @@ class Entropy(Scene):
         # Creating curve for y = -plog2(p) - (1-p)log2(1-p)
         graph = axes.plot(
             func,
-            color=WHITE
+            color=WHITE,
+            x_range=[0,1]
         )
         labels = axes.get_axis_labels("p", "H(p)")
         self.play(
