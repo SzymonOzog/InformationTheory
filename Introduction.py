@@ -193,11 +193,11 @@ class BinarySymmetricChannel(Scene):
 
 class Entropy(Scene):
     def construct(self):
-        coin = Circle(radius=1, color=WHITE).shift(1.5*LEFT)
-        heads = Text("H", color=WHITE).scale(1.5).move_to(coin.get_center())
+        coin = Circle(radius=1, color=BLUE).shift(1.5*LEFT)
+        heads = Text("H", color=BLUE).scale(1.5).move_to(coin.get_center())
         
-        coin2 = Circle(radius=1, color=WHITE).shift(1.5*RIGHT)
-        tails = Text("T", color=WHITE).scale(1.5).move_to(coin2.get_center())
+        coin2 = Circle(radius=1, color=RED).shift(1.5*RIGHT)
+        tails = Text("T", color=RED).scale(1.5).move_to(coin2.get_center())
 
         self.play(FadeIn(coin), Write(heads))
         self.play(FadeIn(coin2), Write(tails))
