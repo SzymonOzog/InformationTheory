@@ -215,7 +215,7 @@ class Entropy(Scene):
         self.play(*[Indicate(x, color=BLUE_A) for x in [*coin, *heads, entropy_formula_1[1]]])
         self.play(*[Indicate(x, color=RED_A) for x in [*coin2, *tails, entropy_formula_1[2]]])
         self.wait(2)
-        
+
         # fade away all objects
         self.play(FadeOut(entropy_formula_1), FadeOut(coin), FadeOut(heads), FadeOut(coin_flipping_text), FadeOut(coin2), FadeOut(tails))
 
@@ -223,7 +223,7 @@ class Entropy(Scene):
         # Non equally likely probabilities
         columns = 5
         n_balls = 10
-        balls = [Dot(color=BLUE if i < 7 else RED).move_to((i%columns) * RIGHT + (i//columns)*DOWN + 2*LEFT + UP) for i in range(n_balls)]
+        balls = [Dot(color=BLUE if i < 7 else RED).move_to((i%columns) * RIGHT + (i//columns)*DOWN + 2*LEFT + 2*UP) for i in range(n_balls)]
         self.play(FadeIn(*balls))
 
         ball_text = Text("Pick a ball: Non equally likely probabilities").shift(2*DOWN)
@@ -306,7 +306,7 @@ class Entropy(Scene):
         self.wait(3)
 
         self.play(FadeIn(entropy_formula_2.shift(UP)), FadeIn(*balls))
-        new_balls = [Dot(color=GREEN).move_to(balls[0].get_center() + UP + i * RIGHT) for i in range(5)]
+        new_balls = [Dot(color=GREEN).move_to(balls[0].get_center() + 2*DOWN + i * RIGHT) for i in range(5)]
         self.play(FadeIn(*new_balls))
         updated_entropy_formula_2 = Tex("$H(X) =$", "$-\\frac{7}{15} \cdot \log_2(\\frac{7}{15})$", "$- \\frac{3}{15} \cdot \log_2(\\frac{3}{15})$", "$- \\frac{5}{15} \cdot \log_2(\\frac{3}{15})$").scale(0.8).move_to(ball_text.get_center())
         updated_entropy_formula_2[1].set_color(BLUE)
