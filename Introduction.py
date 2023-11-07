@@ -226,7 +226,7 @@ class Entropy(Scene):
         self.play(Write(ball_text))
         self.wait(1)
 
-        entropy_formula_2 = Tex("$H(X) =$", "$-0.7 \cdot \log_2(0.7)$", "$- 0.3 \cdot \log_2(0.3)$").scale(0.8).next_to(ball_text, DOWN)
+        entropy_formula_2 = Tex("$H(X) =$", "$-\\frac{7}{10} \cdot \log_2(\\frac{7}{10})$", "$- \\frac{3}{10} \cdot \log_2(\\frac{3}{10})$").scale(0.8).next_to(ball_text, DOWN)
         entropy_formula_2[1].set_color(BLUE)
         entropy_formula_2[2].set_color(RED)
 
