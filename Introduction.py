@@ -219,10 +219,10 @@ class Entropy(Scene):
         # Non equally likely probabilities
         columns = 5
         n_balls = 10
-        balls = [Dot(color=BLUE if i < 7 else RED).move_to((i%columns) * RIGHT + (i//columns)*DOWN + 2*LEFT) for i in range(n_balls)]
+        balls = [Dot(color=BLUE if i < 7 else RED).move_to((i%columns) * RIGHT + (i//columns)*DOWN + 2*LEFT + UP) for i in range(n_balls)]
         self.play(FadeIn(*balls))
 
-        ball_text = Text("Pick a ball: Non equally likely probabilities").shift(3*DOWN)
+        ball_text = Text("Pick a ball: Non equally likely probabilities").shift(2*DOWN)
         self.play(Write(ball_text))
         self.wait(1)
 
