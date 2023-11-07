@@ -212,6 +212,10 @@ class Entropy(Scene):
         self.play(Write(entropy_formula_1))
         self.wait(2)
 
+        self.play(*[Indicate(x, color=BLUE_A) for x in [*coin, *heads, entropy_formula_1[1]]])
+        self.play(*[Indicate(x, color=RED_A) for x in [*coin2, *tails, entropy_formula_1[2]]])
+        self.wait(2)
+        
         # fade away all objects
         self.play(FadeOut(entropy_formula_1), FadeOut(coin), FadeOut(heads), FadeOut(coin_flipping_text), FadeOut(coin2), FadeOut(tails))
 
@@ -233,6 +237,9 @@ class Entropy(Scene):
         self.play(Write(entropy_formula_2))
         self.wait(2)
 
+        self.play(*[Indicate(x, color=BLUE_A) for x in [*balls[:7], entropy_formula_2[1]]])
+        self.play(*[Indicate(x, color=RED_A) for x in [*balls[7:], entropy_formula_2[2]]])
+        self.wait(2)
         # fade away all objects
         self.play(FadeOut(entropy_formula_2), FadeOut(*balls), FadeOut(ball_text))
 
@@ -306,9 +313,12 @@ class Entropy(Scene):
         updated_entropy_formula_2[2].set_color(RED)
         updated_entropy_formula_2[3].set_color(GREEN)
         self.play(Transform(entropy_formula_2,updated_entropy_formula_2))
+        self.play(*[Indicate(x, color=BLUE_A) for x in [*balls[:7], updated_entropy_formula_2[1]]])
+        self.play(*[Indicate(x, color=RED_A) for x in [*balls[7:], updated_entropy_formula_2[2]]])
+        self.play(*[Indicate(x, color=GREEN_A) for x in [*new_balls, updated_entropy_formula_2[3]]])
+        
 
-
-        self.wait(1)
+        self.wait(3)
         
 
 class EntropyBoxRepresentation(Scene):
