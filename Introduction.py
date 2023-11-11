@@ -111,6 +111,32 @@ class InformationContent(Scene):
         self.wait(1)
 
 
+class BSC:
+    def __init__(self):
+        self.input_bit_0 = Circle(radius=0.5, color=BLUE).shift(3*LEFT + 2*UP)
+        self.input_bit_1 = Circle(radius=0.5, color=BLUE).shift(3*LEFT + 2*DOWN)
+
+        self.input_0_text = Tex("0").scale(1.5).move_to(self.input_bit_0.get_center())
+        self.input_1_text = Tex("1").scale(1.5).move_to(self.input_bit_1.get_center())
+
+        self.output_bit_0 = Circle(radius=0.5, color=BLUE).shift(3*RIGHT + 2*UP)
+        self.output_bit_1 = Circle(radius=0.5, color=BLUE).shift(3*RIGHT + 2*DOWN)
+
+        self.output_0_text = Tex("0").scale(1.5).move_to(self.output_bit_0.get_center())
+        self.output_1_text = Tex("1").scale(1.5).move_to(self.output_bit_1.get_center())
+
+        self.arrow_00 = Arrow(start=self.input_bit_0.get_right(), end=self.output_bit_0.get_left(), buff=0.25, color=GREEN)
+        self.arrow_01 = Arrow(start=self.input_bit_0.get_right(), end=self.output_bit_1.get_left(), buff=0.25, color=RED)
+
+        self.arrow_10 = Arrow(start=self.input_bit_1.get_right(), end=self.output_bit_0.get_left(), buff=0.25, color=RED)
+        self.arrow_11 = Arrow(start=self.input_bit_1.get_right(), end=self.output_bit_1.get_left(), buff=0.25, color=GREEN)
+
+        self.p_label = Tex("p").scale(1.5).shift(2*RIGHT + 2.5*UP)
+        self.one_minus_p_label = Tex("1-p").scale(1.5).shift(2*RIGHT + 0.5*UP)
+
+
+
+
 class BinarySymmetricChannel(Scene):
     def construct(self):
         title = Tex("Binary Symmetric Channel").scale(1.5)
@@ -118,44 +144,25 @@ class BinarySymmetricChannel(Scene):
         self.wait(1)
         self.play(FadeOut(title))
 
-        input_bit_0 = Circle(radius=0.5, color=BLUE).shift(3*LEFT + 2*UP)
-        input_bit_1 = Circle(radius=0.5, color=BLUE).shift(3*LEFT + 2*DOWN)
-
-        input_0_text = Tex("0").scale(1.5).move_to(input_bit_0.get_center())
-        input_1_text = Tex("1").scale(1.5).move_to(input_bit_1.get_center())
-
-        output_bit_0 = Circle(radius=0.5, color=BLUE).shift(3*RIGHT + 2*UP)
-        output_bit_1 = Circle(radius=0.5, color=BLUE).shift(3*RIGHT + 2*DOWN)
-
-        output_0_text = Tex("0").scale(1.5).move_to(output_bit_0.get_center())
-        output_1_text = Tex("1").scale(1.5).move_to(output_bit_1.get_center())
-
+        bsc = BSC()
         self.play(
-            Create(input_bit_0), Write(input_0_text),
-            Create(input_bit_1), Write(input_1_text),
-            Create(output_bit_0), Write(output_0_text),
-            Create(output_bit_1), Write(output_1_text),
+            Create(bsc.input_bit_0), Write(bsc.input_0_text),
+            Create(bsc.input_bit_1), Write(bsc.input_1_text),
+            Create(bsc.output_bit_0), Write(bsc.output_0_text),
+            Create(bsc.output_bit_1), Write(bsc.output_1_text),
         )
         self.wait(1)
         
-        arrow_00 = Arrow(start=input_bit_0.get_right(), end=output_bit_0.get_left(), buff=0.25, color=GREEN)
-        arrow_01 = Arrow(start=input_bit_0.get_right(), end=output_bit_1.get_left(), buff=0.25, color=RED)
-
-        arrow_10 = Arrow(start=input_bit_1.get_right(), end=output_bit_0.get_left(), buff=0.25, color=RED)
-        arrow_11 = Arrow(start=input_bit_1.get_right(), end=output_bit_1.get_left(), buff=0.25, color=GREEN)
-        
-        p_label = Tex("p").scale(1.5).shift(2*RIGHT + 2.5*UP)
-        one_minus_p_label = Tex("1-p").scale(1.5).shift(2*RIGHT + 0.5*UP)
         
         self.play(
-            Create(arrow_00), Write(one_minus_p_label),
-            Create(arrow_01), Write(p_label),
+            Create(bsc.arrow_00), Write(bsc.one_minus_p_label),
+            Create(bsc.arrow_01), Write(bsc.p_label),
         )
         self.wait(1)
 
         self.play(
-            Create(arrow_10), Write(one_minus_p_label.copy().shift(DOWN)),
-            Create(arrow_11), Write(p_label.copy().shift(5*DOWN)),
+            Create(bsc.arrow_10), Write(bsc.one_minus_p_label.copy().shift(DOWN)),
+            Create(bsc.arrow_11), Write(bsc.p_label.copy().shift(5*DOWN)),
         )
         self.wait(1)
 
@@ -166,26 +173,26 @@ class BinarySymmetricChannel(Scene):
             self.play(Write(t))
 
         for i,( bit, text) in enumerate(zip(input_string, input_text)):
-            source = input_bit_0.get_center() if bit == "0" else input_bit_1.get_center()
+            source = bsc.input_bit_0.get_center() if bit == "0" else bsc.input_bit_1.get_center()
             prob = np.random.rand()
             FLIP_PROB = 0.1
             if bit == "0":
-                target = output_bit_1.get_center() if prob < FLIP_PROB else output_bit_0.get_center()  
+                target = bsc.output_bit_1.get_center() if prob < FLIP_PROB else bsc.output_bit_0.get_center()  
             else:
-                target = output_bit_0.get_center() if prob < FLIP_PROB else output_bit_1.get_center()
-            resulting_bit = "0" if (target == output_bit_0.get_center()).all() else "1"
+                target = bsc.output_bit_0.get_center() if prob < FLIP_PROB else bsc.output_bit_1.get_center()
+            resulting_bit = "0" if (target == bsc.output_bit_0.get_center()).all() else "1"
 
             self.play(FadeOut(text.copy(), target_position=source))
 
             def animate(arrow): self.play(ShowPassingFlash(arrow.copy().set_color(BLUE)))
             if resulting_bit == "0" and bit == "0":
-                animate(arrow_00)
+                animate(bsc.arrow_00)
             elif resulting_bit == "1" and bit == "0":
-                animate(arrow_01)
+                animate(bsc.arrow_01)
             elif resulting_bit == "0" and bit == "1":
-                animate(arrow_10)
+                animate(bsc.arrow_10)
             else:
-                animate(arrow_11)
+                animate(bsc.arrow_11)
 
             result = Tex(resulting_bit, color=GREEN if resulting_bit == bit else RED).move_to((4+0.3*i)*RIGHT)
             self.play(FadeIn(result, target_position=target))
