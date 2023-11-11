@@ -328,7 +328,8 @@ class Entropy(Scene):
 
 class EntropyBoxRepresentation:
         def __init__(self):
-            joint_entropy_box = Rectangle(width=8, height=1, color=WHITE).shift(UP)
+            self.base_width = 8
+            joint_entropy_box = Rectangle(width=self.base_width, height=1, color=WHITE).shift(UP)
             joint_entropy_label = Tex("$H(X,Y)$").move_to(joint_entropy_box.get_center())
 
             entropy_box_x = Rectangle(width=6, height=1, color=WHITE).shift(1*LEFT)
