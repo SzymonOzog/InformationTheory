@@ -131,8 +131,17 @@ class BSC:
         self.arrow_10 = Arrow(start=self.input_bit_1.get_right(), end=self.output_bit_0.get_left(), buff=0.25, color=RED)
         self.arrow_11 = Arrow(start=self.input_bit_1.get_right(), end=self.output_bit_1.get_left(), buff=0.25, color=GREEN)
 
-        self.p_label = Tex("p").scale(1.5).shift(2*RIGHT + 2.5*UP)
-        self.one_minus_p_label = Tex("1-p").scale(1.5).shift(2*RIGHT + 0.5*UP)
+        self.p_label0 = Tex("p").scale(1.5).shift(2*RIGHT + 2.5*UP)
+        self.one_minus_p_label0 = Tex("1-p").scale(1.5).shift(2*RIGHT + 0.5*DOWN)
+        
+        self.one_minus_p_label1 = self.one_minus_p_label0.copy().shift(UP)
+        self.p_label1 =  self.p_label0.copy().shift(5*DOWN)
+
+        self.bits = VGroup(self.input_bit_0, self.input_bit_1, self.output_bit_0, self.output_bit_1)
+        self.texts = VGroup(self.input_0_text, self.input_1_text, self.output_0_text, self.output_1_text)
+        self.arrows = VGroup(self.arrow_00, self.arrow_01, self.arrow_10, self.arrow_11)
+        self.labels = VGroup(self.p_label0, self.one_minus_p_label0, self.one_minus_p_label1, self.p_label1)
+        self.full_channel = VGroup(self.bits, self.texts, self.arrows, self.labels)
 
 
 
@@ -145,25 +154,14 @@ class BinarySymmetricChannel(Scene):
         self.play(FadeOut(title))
 
         bsc = BSC()
-        self.play(
-            Create(bsc.input_bit_0), Write(bsc.input_0_text),
-            Create(bsc.input_bit_1), Write(bsc.input_1_text),
-            Create(bsc.output_bit_0), Write(bsc.output_0_text),
-            Create(bsc.output_bit_1), Write(bsc.output_1_text),
-        )
+        self.play(Create(bsc.bits), Write(bsc.texts))
         self.wait(1)
         
         
-        self.play(
-            Create(bsc.arrow_00), Write(bsc.one_minus_p_label),
-            Create(bsc.arrow_01), Write(bsc.p_label),
-        )
+        self.play(Create(bsc.arrows[:2]), Write(bsc.labels[:2]))
         self.wait(1)
 
-        self.play(
-            Create(bsc.arrow_10), Write(bsc.one_minus_p_label.copy().shift(DOWN)),
-            Create(bsc.arrow_11), Write(bsc.p_label.copy().shift(5*DOWN)),
-        )
+        self.play(Create(bsc.arrows[2:]), Write(bsc.labels[2:]))
         self.wait(1)
 
         input_string = "1000101"
