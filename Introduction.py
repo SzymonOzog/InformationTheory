@@ -350,6 +350,33 @@ class EntropyBoxRepresentation:
             self.boxes = VGroup(joint_entropy_box, entropy_box_x, entropy_box_y, cond_entropy_box_x, cond_entropy_box_y, mutual_info_box)
             self.labels = VGroup(joint_entropy_label, entropy_label_x, entropy_label_y, cond_entropy_label_x, cond_entropy_label_y, mutual_info_label)
 
+        def update(self, scene, probabilities):
+            update0 = self.boxes[0].copy().stretch_to_fit_width(self.base_width*HXY(probabilities))
+            scene.play(Transform(self.boxes[0], update0))
+            self.boxes[0] = update0
+
+            update1 = self.boxes[1].copy().stretch_to_fit_width(self.base_width*HX(probabilities))
+            update1.move_to(update0.get_corner(LEFT+DOWN) , LEFT+UP)
+            scene.play(Transform(self.boxes[1], update1))
+            self.boxes[1] = update1
+
+            update2 = self.boxes[2].copy().stretch_to_fit_width(self.base_width*HY(probabilities))
+            update2.move_to(update0.get_corner(RIGHT+DOWN) , RIGHT+UP).shift(DOWN)
+            scene.play(Transform(self.boxes[2], update2))
+            self.boxes[2] = update2
+
+            update3 = self.boxes[3].copy().stretch_to_fit_width(self.base_width*HX_g_Y(probabilities))
+            update3.move_to(update0.get_corner(LEFT+DOWN) , LEFT+UP).shift(DOWN)
+            scene.play(Transform(self.boxes[3], update3))
+            self.boxes[3] = update3
+
+
+            update4 = self.boxes[4].copy().stretch_to_fit_width(self.base_width*HY_g_X(probabilities))
+            update4.move_to(update0.get_corner(RIGHT+DOWN) , RIGHT+UP)
+            scene.play(Transform(self.boxes[4], update4))
+            self.boxes[4] = update4
+            
+
 
 
 
