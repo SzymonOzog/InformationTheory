@@ -326,28 +326,30 @@ class Entropy(Scene):
         self.wait(3)
         
 
-class EntropyBoxRepresentation(Scene):
-    def construct(self):
-        joint_entropy_box = Rectangle(width=8, height=1, color=WHITE).shift(UP)
-        joint_entropy_label = Tex("$H(X,Y)$").move_to(joint_entropy_box.get_center())
+class EntropyBoxRepresentation:
+        def __init__(self):
+            joint_entropy_box = Rectangle(width=8, height=1, color=WHITE).shift(UP)
+            joint_entropy_label = Tex("$H(X,Y)$").move_to(joint_entropy_box.get_center())
 
-        entropy_box_x = Rectangle(width=6, height=1, color=WHITE).shift(1*LEFT)
-        entropy_label_x = Tex("$H(X)$").move_to(entropy_box_x.get_center())
-        
-        entropy_box_y = Rectangle(width=4, height=1, color=WHITE).shift(2*RIGHT+DOWN)
-        entropy_label_y = Tex("$H(Y)$").move_to(entropy_box_y.get_center())
-        
-        cond_entropy_box_x = Rectangle(width=4, height=1, color=WHITE).shift(2*LEFT+DOWN)
-        cond_entropy_label_x = Tex("$H(X|Y)$").move_to(cond_entropy_box_x.get_center())
-        
-        cond_entropy_box_y = Rectangle(width=2, height=1, color=WHITE).shift(3*RIGHT)
-        cond_entropy_label_y = Tex("$H(Y|X)$").move_to(cond_entropy_box_y.get_center())
-        
-        mutual_info_box = Rectangle(width=2, height=1, color=WHITE).shift(2*DOWN+RIGHT)
-        mutual_info_label = Tex("I(X; Y)").move_to(mutual_info_box.get_center())
+            entropy_box_x = Rectangle(width=6, height=1, color=WHITE).shift(1*LEFT)
+            entropy_label_x = Tex("$H(X)$").move_to(entropy_box_x.get_center())
+            
+            entropy_box_y = Rectangle(width=4, height=1, color=WHITE).shift(2*RIGHT+DOWN)
+            entropy_label_y = Tex("$H(Y)$").move_to(entropy_box_y.get_center())
+            
+            cond_entropy_box_x = Rectangle(width=4, height=1, color=WHITE).shift(2*LEFT+DOWN)
+            cond_entropy_label_x = Tex("$H(X|Y)$").move_to(cond_entropy_box_x.get_center())
+            
+            cond_entropy_box_y = Rectangle(width=2, height=1, color=WHITE).shift(3*RIGHT)
+            cond_entropy_label_y = Tex("$H(Y|X)$").move_to(cond_entropy_box_y.get_center())
+            
+            mutual_info_box = Rectangle(width=2, height=1, color=WHITE).shift(2*DOWN+RIGHT)
+            mutual_info_label = Tex("I(X; Y)").move_to(mutual_info_box.get_center())
 
-        boxes = VGroup(joint_entropy_box, entropy_box_x, entropy_box_y, cond_entropy_box_x, cond_entropy_box_y, mutual_info_box)
-        labels = VGroup(joint_entropy_label, entropy_label_x, entropy_label_y, cond_entropy_label_x, cond_entropy_label_y, mutual_info_label)
+            self.boxes = VGroup(joint_entropy_box, entropy_box_x, entropy_box_y, cond_entropy_box_x, cond_entropy_box_y, mutual_info_box)
+            self.labels = VGroup(joint_entropy_label, entropy_label_x, entropy_label_y, cond_entropy_label_x, cond_entropy_label_y, mutual_info_label)
 
-        self.play(*[Create(box) for box in boxes], *[Write(label) for label in labels])
+
+
+
         self.wait(3)
