@@ -376,6 +376,11 @@ class EntropyBoxRepresentation:
             update4.move_to(update0.get_corner(RIGHT+DOWN) , RIGHT+UP)
             scene.play(Transform(self.boxes[4], update4), self.labels[4].animate.next_to(update4, RIGHT))
             self.boxes[4] = update4
+
+            update5 = self.boxes[5].copy().stretch_to_fit_width(self.base_width*I(probabilities))
+            update5.move_to(update1.get_corner(RIGHT+DOWN) , RIGHT+UP).shift(DOWN)
+            scene.play(Transform(self.boxes[5], update5), self.labels[5].animate.next_to(update5, DOWN))
+            self.boxes[5] = update5
             
 
 

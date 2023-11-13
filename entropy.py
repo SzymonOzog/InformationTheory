@@ -38,3 +38,6 @@ def HY_g_X(p):
             pj_g_i = p[i,j]/np.sum(p[:,j])
             ret -= p[i,j] * math.log2(pj_g_i)
     return ret
+
+def I(p):
+    return HY(p) - HY_g_X(p)
