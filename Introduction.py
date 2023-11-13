@@ -1,4 +1,5 @@
 from manim import *
+from entropy import *
 from random import random 
 
 
@@ -330,22 +331,22 @@ class EntropyBoxRepresentation:
         def __init__(self):
             self.base_width = 8
             joint_entropy_box = Rectangle(width=self.base_width, height=1, color=WHITE).shift(UP)
-            joint_entropy_label = Tex("$H(X,Y)$").move_to(joint_entropy_box.get_center())
+            joint_entropy_label = Tex("$H(X,Y)$").next_to(joint_entropy_box, UP)
 
             entropy_box_x = Rectangle(width=6, height=1, color=WHITE).shift(1*LEFT)
-            entropy_label_x = Tex("$H(X)$").move_to(entropy_box_x.get_center())
+            entropy_label_x = Tex("$H(X)$").next_to(entropy_box_x, LEFT)
             
             entropy_box_y = Rectangle(width=4, height=1, color=WHITE).shift(2*RIGHT+DOWN)
-            entropy_label_y = Tex("$H(Y)$").move_to(entropy_box_y.get_center())
+            entropy_label_y = Tex("$H(Y)$").next_to(entropy_box_y, RIGHT)
             
             cond_entropy_box_x = Rectangle(width=4, height=1, color=WHITE).shift(2*LEFT+DOWN)
-            cond_entropy_label_x = Tex("$H(X|Y)$").move_to(cond_entropy_box_x.get_center())
+            cond_entropy_label_x = Tex("$H(X|Y)$").next_to(cond_entropy_box_x, LEFT)
             
             cond_entropy_box_y = Rectangle(width=2, height=1, color=WHITE).shift(3*RIGHT)
-            cond_entropy_label_y = Tex("$H(Y|X)$").move_to(cond_entropy_box_y.get_center())
+            cond_entropy_label_y = Tex("$H(Y|X)$").next_to(cond_entropy_box_y, RIGHT)
             
             mutual_info_box = Rectangle(width=2, height=1, color=WHITE).shift(2*DOWN+RIGHT)
-            mutual_info_label = Tex("I(X; Y)").move_to(mutual_info_box.get_center())
+            mutual_info_label = Tex("I(X; Y)").next_to(mutual_info_box, DOWN)
 
             self.boxes = VGroup(joint_entropy_box, entropy_box_x, entropy_box_y, cond_entropy_box_x, cond_entropy_box_y, mutual_info_box)
             self.labels = VGroup(joint_entropy_label, entropy_label_x, entropy_label_y, cond_entropy_label_x, cond_entropy_label_y, mutual_info_label)
