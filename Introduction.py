@@ -381,4 +381,3 @@ class EntropyBoxRepresentation:
 
 
 
-        self.wait(3)
