@@ -353,28 +353,28 @@ class EntropyBoxRepresentation:
 
         def update(self, scene, probabilities):
             update0 = self.boxes[0].copy().stretch_to_fit_width(self.base_width*HXY(probabilities))
-            scene.play(Transform(self.boxes[0], update0))
+            scene.play(Transform(self.boxes[0], update0), self.labels[0].animate.next_to(update0, UP))
             self.boxes[0] = update0
 
             update1 = self.boxes[1].copy().stretch_to_fit_width(self.base_width*HX(probabilities))
             update1.move_to(update0.get_corner(LEFT+DOWN) , LEFT+UP)
-            scene.play(Transform(self.boxes[1], update1))
+            scene.play(Transform(self.boxes[1], update1), self.labels[1].animate.next_to(update1, LEFT))
             self.boxes[1] = update1
 
             update2 = self.boxes[2].copy().stretch_to_fit_width(self.base_width*HY(probabilities))
             update2.move_to(update0.get_corner(RIGHT+DOWN) , RIGHT+UP).shift(DOWN)
-            scene.play(Transform(self.boxes[2], update2))
+            scene.play(Transform(self.boxes[2], update2), self.labels[2].animate.next_to(update2, RIGHT))
             self.boxes[2] = update2
 
             update3 = self.boxes[3].copy().stretch_to_fit_width(self.base_width*HX_g_Y(probabilities))
             update3.move_to(update0.get_corner(LEFT+DOWN) , LEFT+UP).shift(DOWN)
-            scene.play(Transform(self.boxes[3], update3))
+            scene.play(Transform(self.boxes[3], update3), self.labels[3].animate.next_to(update3, LEFT))
             self.boxes[3] = update3
 
 
             update4 = self.boxes[4].copy().stretch_to_fit_width(self.base_width*HY_g_X(probabilities))
             update4.move_to(update0.get_corner(RIGHT+DOWN) , RIGHT+UP)
-            scene.play(Transform(self.boxes[4], update4))
+            scene.play(Transform(self.boxes[4], update4), self.labels[4].animate.next_to(update4, RIGHT))
             self.boxes[4] = update4
             
 
