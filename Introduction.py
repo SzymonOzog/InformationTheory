@@ -329,6 +329,7 @@ class Entropy(Scene):
 
 class EntropyBoxRepresentation:
         def __init__(self):
+            self.scale=1
             self.base_width = 6
             joint_entropy_box = Rectangle(width=self.base_width, height=1, fill_opacity=0.5).set_fill(GREEN).shift(UP)
             joint_entropy_label = Tex("$H(X,Y)$",color=GREEN).next_to(joint_entropy_box, UP)
@@ -351,23 +352,25 @@ class EntropyBoxRepresentation:
             self.boxes = VGroup(joint_entropy_box, entropy_box_x, entropy_box_y, cond_entropy_box_x, cond_entropy_box_y, mutual_info_box)
             self.labels = VGroup(joint_entropy_label, entropy_label_x, entropy_label_y, cond_entropy_label_x, cond_entropy_label_y, mutual_info_label)
 
+            self.whole = VGroup(self.boxes, self.labels)
+
         def update(self, scene, probabilities):
-            update0 = self.boxes[0].copy().stretch_to_fit_width(self.base_width*HXY(probabilities))
+            update0 = self.boxes[0].copy().stretch_to_fit_width(self.base_width*self.scale*HXY(probabilities))
             
-            update1 = self.boxes[1].copy().stretch_to_fit_width(self.base_width*HX(probabilities))
+            update1 = self.boxes[1].copy().stretch_to_fit_width(self.base_width*self.scale*HX(probabilities))
             update1.move_to(update0.get_corner(LEFT+DOWN) , LEFT+UP)
             
-            update2 = self.boxes[2].copy().stretch_to_fit_width(self.base_width*HY(probabilities))
-            update2.move_to(update0.get_corner(RIGHT+DOWN) , RIGHT+UP).shift(DOWN)
+            update2 = self.boxes[2].copy().stretch_to_fit_width(self.base_width*self.scale*HY(probabilities))
+            update2.move_to(update0.get_corner(RIGHT+DOWN) , RIGHT+UP).shift(self.scale*DOWN)
             
-            update3 = self.boxes[3].copy().stretch_to_fit_width(self.base_width*HX_g_Y(probabilities))
-            update3.move_to(update0.get_corner(LEFT+DOWN) , LEFT+UP).shift(DOWN)
+            update3 = self.boxes[3].copy().stretch_to_fit_width(self.base_width*self.scale*HX_g_Y(probabilities))
+            update3.move_to(update0.get_corner(LEFT+DOWN) , LEFT+UP).shift(self.scale*DOWN)
             
-            update4 = self.boxes[4].copy().stretch_to_fit_width(self.base_width*HY_g_X(probabilities))
+            update4 = self.boxes[4].copy().stretch_to_fit_width(self.base_width*self.scale*HY_g_X(probabilities))
             update4.move_to(update0.get_corner(RIGHT+DOWN) , RIGHT+UP)
             
-            update5 = self.boxes[5].copy().stretch_to_fit_width(self.base_width*I(probabilities))
-            update5.move_to(update1.get_corner(RIGHT+DOWN) , RIGHT+UP).shift(DOWN)
+            update5 = self.boxes[5].copy().stretch_to_fit_width(self.base_width*self.scale*I(probabilities))
+            update5.move_to(update1.get_corner(RIGHT+DOWN) , RIGHT+UP).shift(self.scale*DOWN)
 
             scene.play(Transform(self.boxes[0], update0), self.labels[0].animate.next_to(update0, UP),
                        Transform(self.boxes[1], update1), self.labels[1].animate.next_to(update1, LEFT),
@@ -382,6 +385,11 @@ class EntropyBoxRepresentation:
             self.boxes[3] = update3
             self.boxes[4] = update4
             self.boxes[5] = update5
+
+        def set_scale(self, new_scale):
+            self.scale = new_scale
+            self.whole.scale(new_scale)
+            return self
 
             
 
