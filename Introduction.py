@@ -138,11 +138,15 @@ class BSC:
         self.one_minus_p_label1 = self.one_minus_p_label0.copy().shift(UP)
         self.p_label1 =  self.p_label0.copy().shift(5*DOWN)
 
+        self.q_label = Tex("q").scale(1.5).next_to(self.input_bit_0, LEFT)
+        self.one_minus_q_label = Tex("1-q").scale(1.5).next_to(self.input_bit_1, LEFT)
+
         self.bits = VGroup(self.input_bit_0, self.input_bit_1, self.output_bit_0, self.output_bit_1)
         self.texts = VGroup(self.input_0_text, self.input_1_text, self.output_0_text, self.output_1_text)
         self.arrows = VGroup(self.arrow_00, self.arrow_01, self.arrow_10, self.arrow_11)
         self.labels = VGroup(self.p_label0, self.one_minus_p_label0, self.one_minus_p_label1, self.p_label1)
-        self.full_channel = VGroup(self.bits, self.texts, self.arrows, self.labels)
+        self.q_labels = VGroup(self.q_label, self.one_minus_q_label)
+        self.full_channel = VGroup(self.bits, self.texts, self.arrows, self.labels, self.q_labels)
 
 
 
@@ -395,8 +399,14 @@ class EntropyBoxRepresentation:
 class BSCAnalysis(Scene):
     def construct(self):
         bsc = BSC()
-        self.play(Create(bsc.full_channel.scale(0.5).shift(DOWN+0.5*LEFT)))
+        bsc.full_channel.scale(0.5).shift(DOWN+0.5*LEFT)
+        self.play(Create(bsc.full_channel[:4]))
         self.wait(3)
+
+        self.play(Create(bsc.q_label))
+        self.wait(2)
+        self.play(Create(bsc.one_minus_q_label))
+
 
         ebr = EntropyBoxRepresentation()
         ebr.set_scale(0.5).whole.shift(2*UP+2*RIGHT)
