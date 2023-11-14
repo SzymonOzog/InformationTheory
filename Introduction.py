@@ -391,8 +391,23 @@ class EntropyBoxRepresentation:
             self.whole.scale(new_scale)
             return self
 
-            
 
+class BSCAnalysis(Scene):
+    def construct(self):
+        bsc = BSC()
+        self.play(Create(bsc.full_channel.scale(0.5).shift(DOWN+0.5*LEFT)))
+        self.wait(3)
 
+        ebr = EntropyBoxRepresentation()
+        ebr.set_scale(0.5).whole.shift(2*UP+2*RIGHT)
+        self.play(Create(ebr.boxes), Write(ebr.labels))
+        
+        self.wait(2)
+        q = 0.5
+        p = 0.9
+        pr = np.array([[q * p, q * (1-p)],
+            [(1-q) * (1-p), (1-q) * p]])
+        ebr.update(self, pr)
+        self.wait(2)
 
 
