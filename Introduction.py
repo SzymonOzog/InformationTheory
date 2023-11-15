@@ -396,6 +396,13 @@ class EntropyBoxRepresentation:
             return self
 
 
+def make_probs(p,q):
+    return [[q * p, q * (1-p)],
+            [(1-q) * (1-p), (1-q) * p]]
+
+def probs_to_str(pr):
+    return [[str(x) for x in y]for y in pr]
+
 class BSCAnalysis(Scene):
     def construct(self):
         bsc = BSC()
@@ -415,9 +422,38 @@ class BSCAnalysis(Scene):
         self.wait(2)
         q = 0.5
         p = 0.9
-        pr = np.array([[q * p, q * (1-p)],
-            [(1-q) * (1-p), (1-q) * p]])
-        ebr.update(self, pr)
+        pr = make_probs(p,q)
+
+        def make_prob_table(contents):
+            return Table(contents, 
+                           row_labels=[Text("0"), Text("1")], 
+                           col_labels=[Text("0"), Text("1")], 
+                           top_left_entry=Tex("$X Y$")).scale(0.4).shift(1.5*UP+3.5*LEFT)
+
+        prob_table = make_prob_table([["",""],["",""]])
+        
+        str_probs = probs_to_str(pr)
+        self.play(Create(prob_table))
+        self.wait(1)
+        self.play(Transform(prob_table, make_prob_table([["p*q",""],["",""]])))
+        self.wait(1)
+        self.play(Transform(prob_table, make_prob_table([["p*q","(1-p)*q"],["",""]])))
+        self.wait(1)
+        self.play(Transform(prob_table, make_prob_table([["p*q","(1-p)*q"],["(1-q)*p",""]])))
+        self.wait(1)
+        self.play(Transform(prob_table, make_prob_table([["p*q","(1-p)*q"],["(1-q)*p","(1-q)*(1-p)"]])))
+        self.wait(1)
+        self.play(Transform(prob_table, make_prob_table([[f"{p}*{q}","(1-p)*q"],["(1-q)*p","(1-q)*(1-p)"]])))
+        self.wait(1)
+        self.play(Transform(prob_table, make_prob_table([[f"{p}*{q}","(1-p)*{q}"],["(1-q)*{p}","(1-q)*(1-p)"]])))
+        self.wait(1)
+        self.play(Transform(prob_table, make_prob_table([[f"{p}*{q}",f"(1-{p})*{q}"],[f"(1-{q})*{p}","(1-q)*(1-p)"]])))
+        self.wait(1)
+        self.play(Transform(prob_table, make_prob_table([[f"{p}*{q}",f"(1-{p})*{q}"],[f"(1-{q})*{p}",f"(1-{q})*(1-{p})"]])))
+        self.wait(1)
+        self.play(Transform(prob_table, make_prob_table([["0.45", "0.05"], ["0.05", "0.45"]])))
+
+        ebr.update(self, np.array(pr))
         self.wait(2)
 
 
