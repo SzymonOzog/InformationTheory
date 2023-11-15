@@ -425,10 +425,15 @@ class BSCAnalysis(Scene):
         pr = make_probs(p,q)
 
         def make_prob_table(contents):
-            return Table(contents, 
+            t = Table(contents, 
                            row_labels=[Text("0"), Text("1")], 
                            col_labels=[Text("0"), Text("1")], 
                            top_left_entry=Tex("$X Y$")).scale(0.4).shift(1.5*UP+3.5*LEFT)
+            c = [GREEN, RED, RED, GREEN]
+            ent = t.get_entries_without_labels()
+            for i in range(len(c)):
+                ent[i].set_color(c[i])
+            return t
 
         prob_table = make_prob_table([["",""],["",""]])
         
