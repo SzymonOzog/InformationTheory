@@ -445,7 +445,7 @@ class BSCAnalysis(Scene):
         self.wait(1)
         self.play(Transform(prob_table, make_prob_table([[f"{p}*{q}","(1-p)*q"],["(1-q)*p","(1-q)*(1-p)"]])))
         self.wait(1)
-        self.play(Transform(prob_table, make_prob_table([[f"{p}*{q}","(1-p)*{q}"],["(1-q)*{p}","(1-q)*(1-p)"]])))
+        self.play(Transform(prob_table, make_prob_table([[f"{p}*{q}",f"(1-p)*{q}"],[f"(1-q)*{p}","(1-q)*(1-p)"]])))
         self.wait(1)
         self.play(Transform(prob_table, make_prob_table([[f"{p}*{q}",f"(1-{p})*{q}"],[f"(1-{q})*{p}","(1-q)*(1-p)"]])))
         self.wait(1)
