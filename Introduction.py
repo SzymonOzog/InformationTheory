@@ -425,10 +425,14 @@ class BSCAnalysis(Scene):
         pr = make_probs(p,q)
 
         def make_prob_table(contents):
+            l = Line(0.5*UP+LEFT, 0.5*DOWN+RIGHT)
+            x = Tex("X").next_to(l, DOWN+LEFT).shift(0.5*UP+RIGHT)
+            y = Tex("Y").next_to(l, UP+RIGHT).shift(0.5*DOWN+LEFT)
             t = Table(contents, 
                            row_labels=[Text("0"), Text("1")], 
                            col_labels=[Text("0"), Text("1")], 
-                           top_left_entry=Tex("$X Y$")).scale(0.4).shift(1.5*UP+3.5*LEFT)
+                           v_buff=0.9, h_buff=1.1,
+                           top_left_entry=VGroup(l,x,y)).scale(0.4).shift(1.5*UP+3.5*LEFT)
             c = [GREEN, RED, RED, GREEN]
             ent = t.get_entries_without_labels()
             for i in range(len(c)):
