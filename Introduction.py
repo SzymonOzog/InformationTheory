@@ -401,7 +401,7 @@ def make_probs(p,q):
             [(1-q) * (1-p), (1-q) * p]]
 
 def probs_to_str(pr):
-    return [[str(x) for x in y]for y in pr]
+    return [[f"{x:.2f}" for x in y]for y in pr]
 
 class BSCAnalysis(Scene):
     def construct(self):
