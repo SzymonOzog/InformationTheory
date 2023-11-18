@@ -396,6 +396,46 @@ class EntropyBoxRepresentation:
             return self
 
 
+class TwoEventEntropy(Scene):
+    def construct(self):
+        joint_entropy_text = Tex("Joint Entropy")
+        joint_entropy_text.shift(UP)
+        self.play(Write(joint_entropy_text))
+        conditional_entropy_text = Tex("Conditional Entropy")
+        self.play(Write(conditional_entropy_text))
+        mutual_information_text = Tex("Mutual Information")
+        mutual_information_text.shift(DOWN)
+        self.play(Write(mutual_information_text))
+
+        self.wait(1)
+        self.play(FadeOut(joint_entropy_text), FadeOut(conditional_entropy_text), FadeOut(mutual_information_text))
+
+        colors = [RED, GREEN, YELLOW, BLUE]
+        shapes = [Square, Star, Triangle, Circle]
+        
+        combinations = np.random.choice(a=[True, False], size = (len(colors), len(shapes)), p=[0.9,0.1])
+        contents = [[shape(color=color) if condition else Text("") for condition, shape in zip(row, shapes)] for row, color in zip(combinations, colors)]
+        t = MobjectTable(contents,
+                           row_labels=[Square(color=c, fill_opacity=1) for c in colors], 
+                           col_labels=[x(color=WHITE) for x in shapes]
+                           ).scale(0.4)
+        t.get_vertical_lines()[0].set_color(RED)
+        t.get_horizontal_lines()[0].set_color(RED)
+        self.play(Create(t))
+        self.wait(2)
+        combinations = []
+
+        p_x_formula = Tex("$p(x) =$", "$\\sum p(x,y)$")
+        p_y_formula = Tex("$p(y) =$", "$\\sum p(x,y)$")
+        p_x_g_y_formula = Tex("$p(x|y) =$", "$\\frac{p(x,y)}{p(y)}$")
+        p_y_g_x_formula = Tex("$p(y|x) =$", "$\\frac{p(x,y)}{p(x)}$")
+
+        joint_entropy_formula = Tex("$H(X,Y) =$", "$-p(x,y) \cdot \log_2(p(x,y))$")
+        conditional_entropy_formula = Tex("$H(X|Y) =$", "$-\\sum p(x,y) \cdot \log_2\\left(\\frac{p(x,y)}{p(y)}\\right)$")
+        mutual_information_formula = Tex("$I(X;Y) =$", "$H(X) - H(X|Y)$", "$= H(Y) - H(Y|X)$", "$= H(X) + H(Y) - H(X,Y)$")
+        pass
+
+
 def make_probs(p,q):
     return [[q * p, q * (1-p)],
             [(1-q) * (1-p), (1-q) * p]]
