@@ -422,6 +422,15 @@ class BSCAnalysis(Scene):
         self.wait(2)
         q = 0.5
         p = 0.9
+
+        q_tr = ValueTracker(q)
+        p_tr = ValueTracker(p)
+
+
+        p_text = Tex("$p=$", f"${p_tr.get_value()}$").add_updater(lambda x: x.become(Tex("$p=$",f"${p_tr.get_value():.2f}$"), match_center=True)).shift(DOWN+5*LEFT)
+        q_text = Tex("$q=$", f"${q_tr.get_value()}$").add_updater(lambda x: x.become(Tex("$q=$",f"${q_tr.get_value():.2f}$"), match_center=True)).shift(1.5*DOWN+5*LEFT)
+        self.play(Write(p_text), Write(q_text))
+        self.wait(1)
         pr = make_probs(p,q)
 
         def make_prob_table(contents):
@@ -462,7 +471,10 @@ class BSCAnalysis(Scene):
         self.wait(1)
         self.play(Transform(prob_table, make_prob_table([["0.45", "0.05"], ["0.05", "0.45"]])))
 
-        ebr.update(self, np.array(pr))
-        self.wait(2)
+        prob_table.add_updater(lambda x: x.become(
+            make_prob_table(probs_to_str(make_probs(p_tr.get_value(), q_tr.get_value()))), match_center=True))
 
+        self.play(q_tr.animate.set_value(0.6))
+        ebr.update(self, np.array(make_probs(p_tr.get_value(), q_tr.get_value())))
+        self.wait(2)
 
