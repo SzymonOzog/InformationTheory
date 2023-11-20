@@ -425,15 +425,30 @@ class TwoEventEntropy(Scene):
         self.wait(2)
         combinations = []
 
-        p_x_formula = Tex("$p(x) =$", "$\\sum p(x,y)$")
-        p_y_formula = Tex("$p(y) =$", "$\\sum p(x,y)$")
-        p_x_g_y_formula = Tex("$p(x|y) =$", "$\\frac{p(x,y)}{p(y)}$")
-        p_y_g_x_formula = Tex("$p(y|x) =$", "$\\frac{p(x,y)}{p(x)}$")
+        self.play(t.animate.become(t.copy().scale(0.4).shift(2*UP+4*LEFT)))
+        self.wait(3)
 
-        joint_entropy_formula = Tex("$H(X,Y) =$", "$-p(x,y) \cdot \log_2(p(x,y))$")
-        conditional_entropy_formula = Tex("$H(X|Y) =$", "$-\\sum p(x,y) \cdot \log_2\\left(\\frac{p(x,y)}{p(y)}\\right)$")
-        mutual_information_formula = Tex("$I(X;Y) =$", "$H(X) - H(X|Y)$", "$= H(Y) - H(Y|X)$", "$= H(X) + H(Y) - H(X,Y)$")
-        pass
+        # p_x_formula = Tex("$p(x) =$", "$\\sum p(x,y)$")
+        # p_y_formula = Tex("$p(y) =$", "$\\sum p(x,y)$")
+        # p_x_g_y_formula = Tex("$p(x|y) =$", "$\\frac{p(x,y)}{p(y)}$")
+        # p_y_g_x_formula = Tex("$p(y|x) =$", "$\\frac{p(x,y)}{p(x)}$")
+
+        joint_entropy_formula = Tex("$H(X,Y) =$", "$-\\sum\\limits_{x,y} p(x,y) \cdot \log_2(p(x,y))$")
+        entropy_x_formula = Tex("$H(X) =$", "$-\\sum\\limits_{x,y} p(x,y) \cdot \log_2(p(x))$")
+        entropy_y_formula = Tex("$H(Y) =$", "$-\\sum\\limits_{x,y} p(x,y) \cdot \log_2(p(y))$")
+        conditional_entropy_formula = Tex("$H(X|Y) =$", "$-\\sum\\limits_{x,y} p(x,y) \cdot \log_2\\left(\\frac{p(x,y)}{p(y)}\\right)$")
+        mutual_information_formula = MathTex("I(X;Y) = H(X) - H(X|Y) & = H(Y) - H(Y|X) & = H(X) + H(Y) - H(X,Y)")
+        
+        formulas = VGroup(joint_entropy_formula, entropy_x_formula, entropy_y_formula, conditional_entropy_formula, mutual_information_formula)
+        arranged_formulas = formulas.copy().scale(0.6).shift(UP+3*LEFT).arrange(DOWN, center=False, aligned_edge=LEFT)
+
+        for i in range(len(formulas)):
+            self.play(Write(formulas[i]))
+            self.wait(3)
+            
+            self.play(Transform(formulas[i], arranged_formulas[i]))
+            self.wait(3)
+        self.wait(3)
 
 
 def make_probs(p,q):
