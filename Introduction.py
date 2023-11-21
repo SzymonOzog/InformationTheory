@@ -425,7 +425,7 @@ class TwoEventEntropy(Scene):
         self.wait(2)
         combinations = []
 
-        self.play(t.animate.become(t.copy().scale(0.4).shift(2*UP+4*LEFT)))
+        self.play(t.animate.become(t.copy().scale(0.4).shift(2*UP+4*RIGHT)))
         self.wait(3)
 
         # p_x_formula = Tex("$p(x) =$", "$\\sum p(x,y)$")
@@ -440,7 +440,7 @@ class TwoEventEntropy(Scene):
         mutual_information_formula = MathTex("I(X;Y) = H(X) - H(X|Y) & = H(Y) - H(Y|X) & = H(X) + H(Y) - H(X,Y)")
         
         formulas = VGroup(joint_entropy_formula, entropy_x_formula, entropy_y_formula, conditional_entropy_formula, mutual_information_formula)
-        arranged_formulas = formulas.copy().scale(0.6).shift(UP+3*LEFT).arrange(DOWN, center=False, aligned_edge=LEFT)
+        arranged_formulas = formulas.copy().scale(0.6).shift(3*UP+4*LEFT).arrange(DOWN, center=False, aligned_edge=LEFT)
 
         for i in range(len(formulas)):
             self.play(Write(formulas[i]))
