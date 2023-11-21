@@ -434,8 +434,8 @@ class TwoEventEntropy(Scene):
         # p_y_g_x_formula = Tex("$p(y|x) =$", "$\\frac{p(x,y)}{p(x)}$")
 
         joint_entropy_formula = Tex("$H(X,Y) =$", "$-\\sum\\limits_{x,y} p(x,y) \cdot \log_2(p(x,y))$")
-        entropy_x_formula = Tex("$H(X) =$", "$-\\sum\\limits_{x,y} p(x,y) \cdot \log_2(p(x))$")
-        entropy_y_formula = Tex("$H(Y) =$", "$-\\sum\\limits_{x,y} p(x,y) \cdot \log_2(p(y))$")
+        entropy_x_formula = Tex("$H(X) =$", "$-\\sum\\limits_{x,y} p(x,y) \cdot \log_2(\\sum\\limits_{y} p(x,y))$")
+        entropy_y_formula = Tex("$H(Y) =$", "$-\\sum\\limits_{x,y} p(x,y) \cdot \log_2(\\sum\\limits_{x} p(x,y))$")
         conditional_entropy_formula = Tex("$H(X|Y) =$", "$-\\sum\\limits_{x,y} p(x,y) \cdot \log_2\\left(\\frac{p(x,y)}{p(y)}\\right)$")
         mutual_information_formula = MathTex("I(X;Y) = H(X) - H(X|Y) & = H(Y) - H(Y|X) & = H(X) + H(Y) - H(X,Y)")
         
