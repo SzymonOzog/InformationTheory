@@ -413,7 +413,10 @@ class TwoEventEntropy(Scene):
         colors = [RED, GREEN, YELLOW, BLUE]
         shapes = [Square, Star, Triangle, Circle]
         
-        combinations = np.random.choice(a=[True, False], size = (len(colors), len(shapes)), p=[0.9,0.1])
+        combinations = [[True, True, True, False],
+                        [False, True, True, True],
+                        [True, False, True, True],
+                        [True, True, False, True]]
         contents = [[shape(color=color) if condition else Text("") for condition, shape in zip(row, shapes)] for row, color in zip(combinations, colors)]
         t = MobjectTable(contents,
                            row_labels=[Square(color=c, fill_opacity=1) for c in colors], 
@@ -428,27 +431,81 @@ class TwoEventEntropy(Scene):
         self.play(t.animate.become(t.copy().scale(0.4).shift(2*UP+4*RIGHT)))
         self.wait(3)
 
-        # p_x_formula = Tex("$p(x) =$", "$\\sum p(x,y)$")
-        # p_y_formula = Tex("$p(y) =$", "$\\sum p(x,y)$")
-        # p_x_g_y_formula = Tex("$p(x|y) =$", "$\\frac{p(x,y)}{p(y)}$")
-        # p_y_g_x_formula = Tex("$p(y|x) =$", "$\\frac{p(x,y)}{p(x)}$")
-
         joint_entropy_formula = Tex("$H(X,Y) =$", "$-\\sum\\limits_{x,y} p(x,y) \cdot \log_2(p(x,y))$")
         entropy_x_formula = Tex("$H(X) =$", "$-\\sum\\limits_{x,y} p(x,y) \cdot \log_2(\\sum\\limits_{y} p(x,y))$")
         entropy_y_formula = Tex("$H(Y) =$", "$-\\sum\\limits_{x,y} p(x,y) \cdot \log_2(\\sum\\limits_{x} p(x,y))$")
         conditional_entropy_formula = Tex("$H(X|Y) =$", "$-\\sum\\limits_{x,y} p(x,y) \cdot \log_2\\left(\\frac{p(x,y)}{p(y)}\\right)$")
         mutual_information_formula = MathTex("I(X;Y) = H(X) - H(X|Y) & = H(Y) - H(Y|X) & = H(X) + H(Y) - H(X,Y)")
         
-        formulas = VGroup(joint_entropy_formula, entropy_x_formula, entropy_y_formula, conditional_entropy_formula, mutual_information_formula)
+        formulas = VGroup(entropy_x_formula, entropy_y_formula, joint_entropy_formula, conditional_entropy_formula, mutual_information_formula)
         arranged_formulas = formulas.copy().scale(0.6).shift(3*UP+4*LEFT).arrange(DOWN, center=False, aligned_edge=LEFT)
 
-        for i in range(len(formulas)):
-            self.play(Write(formulas[i]))
-            self.wait(3)
-            
-            self.play(Transform(formulas[i], arranged_formulas[i]))
-            self.wait(3)
+        formulas[0].shift(UP + 2.5*LEFT)
+
+        self.play(Write(formulas[0]))
         self.wait(3)
+
+        low_frac = 12#$np.sum(combinations)
+        final_eq = VGroup(*[
+                    Tex(f"$-\\frac{{3}}{{{low_frac}}} \log_2(\\frac{{3}}{{{low_frac}}})$", color=RED),
+                    Tex(f"$-\\frac{{3}}{{{low_frac}}} \log_2(\\frac{{3}}{{{low_frac}}})$", color=GREEN),
+                    Tex(f"$-\\frac{{3}}{{{low_frac}}} \log_2(\\frac{{3}}{{{low_frac}}})$", color=YELLOW),
+                    Tex(f"$-\\frac{{3}}{{{low_frac}}} \log_2(\\frac{{3}}{{{low_frac}}})$", color=BLUE)]).arrange(DOWN, center=False, aligned_edge=LEFT)
+        
+        interm_eq = VGroup(*[
+                    Tex(f"$-\\frac{{1}}{{{low_frac}}} \log_2(\\frac{{3}}{{{low_frac}}})$", color=RED),
+                    Tex(f"$-\\frac{{1}}{{{low_frac}}} \log_2(\\frac{{3}}{{{low_frac}}})$", color=RED),
+                    Tex(f"$-\\frac{{1}}{{{low_frac}}} \log_2(\\frac{{3}}{{{low_frac}}})$", color=RED)]).arrange(DOWN, center=False, aligned_edge=LEFT)
+        
+        base_eq = Tex(f"$-\\frac{{1}}{{{low_frac}}}$", color=RED)
+        base_eq2 = Tex(f"$-\\frac{{1}}{{{low_frac}}} \log_2()$", color=RED)
+        base_eq3 = Tex(f"$-\\frac{{1}}{{{low_frac}}} \log_2(\\frac{{1}}{{{low_frac}}}+\\frac{{1}}{{{low_frac}}}+\\frac{{1}}{{{low_frac}}})$", color=RED)
+        
+        
+        self.play(Indicate(t.get_entries((2,2))))
+        current = t.get_entries((2,2)).copy()
+        self.play(Transform(current, base_eq))
+        self.wait(1)
+        self.play(Transform(current, base_eq2))
+        self.wait(1)
+        current = VGroup(*([t.get_entries(x).copy() for x in [(2,2), (2,3), (2,4)]] + [current]))
+        self.play(Transform(current, base_eq3))
+        self.wait(1)
+        self.play(Transform(current, interm_eq[0]))
+        i_eq = [current]
+        for i in range(2):
+            i_eq.append(t.get_entries((2,3+i)).copy())
+            self.play(Transform(i_eq[-1], interm_eq[1+i]))
+        i_eq = VGroup(*i_eq)
+        self.play(Transform(i_eq, final_eq[0]))
+        self.wait(3)
+        self.play(Transform(i_eq, final_eq))
+        self.wait(3)
+
+        old_formula = Tex("$H(X) =$", "$-\\sum\\limits_{x} p(x) \cdot \log_2\\left(p(x)\\right)$").move_to(formulas[0].get_corner(LEFT), LEFT)
+        formulas[0].save_state()
+        self.play(formulas[0].animate.become(old_formula))
+        self.wait(3)
+        self.play(Restore(formulas[0]))
+        self.wait(3)
+        self.play(Transform(formulas[0], arranged_formulas[0]))
+        self.wait(3)
+
+        self.play(FadeOut(i_eq))
+
+        self.play(Write(formulas[1]))
+        self.wait(3)
+        old_formula = Tex("$H(Y) =$", "$-\\sum\\limits_{y} p(y) \cdot \log_2\\left(p(y)\\right)$").move_to(formulas[1].get_corner(LEFT), LEFT)
+        formulas[1].save_state()
+        self.play(formulas[1].animate.become(old_formula))
+        self.wait(3)
+        self.play(Restore(formulas[1]))
+        self.wait(3)
+        self.play(Transform(formulas[1], arranged_formulas[1]))
+        self.wait(3)
+
+
+
 
 
 def make_probs(p,q):
