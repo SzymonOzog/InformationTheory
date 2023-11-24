@@ -447,15 +447,15 @@ class TwoEventEntropy(Scene):
 
         low_frac = 12#$np.sum(combinations)
         final_eq = VGroup(*[
-                    Tex(f"$-\\frac{{3}}{{{low_frac}}} \log_2(\\frac{{3}}{{{low_frac}}})$", color=RED),
-                    Tex(f"$-\\frac{{3}}{{{low_frac}}} \log_2(\\frac{{3}}{{{low_frac}}})$", color=GREEN),
-                    Tex(f"$-\\frac{{3}}{{{low_frac}}} \log_2(\\frac{{3}}{{{low_frac}}})$", color=YELLOW),
-                    Tex(f"$-\\frac{{3}}{{{low_frac}}} \log_2(\\frac{{3}}{{{low_frac}}})$", color=BLUE)]).arrange(DOWN, center=False, aligned_edge=LEFT)
+                    Tex(f"$-\\frac{{3}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{3}}{{{low_frac}}})$", color=RED),
+                    Tex(f"$-\\frac{{3}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{3}}{{{low_frac}}})$", color=GREEN),
+                    Tex(f"$-\\frac{{3}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{3}}{{{low_frac}}})$", color=YELLOW),
+                    Tex(f"$-\\frac{{3}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{3}}{{{low_frac}}})$", color=BLUE)]).arrange(DOWN, center=False, aligned_edge=LEFT)
         
         interm_eq = VGroup(*[
-                    Tex(f"$-\\frac{{1}}{{{low_frac}}} \log_2(\\frac{{3}}{{{low_frac}}})$", color=RED),
-                    Tex(f"$-\\frac{{1}}{{{low_frac}}} \log_2(\\frac{{3}}{{{low_frac}}})$", color=RED),
-                    Tex(f"$-\\frac{{1}}{{{low_frac}}} \log_2(\\frac{{3}}{{{low_frac}}})$", color=RED)]).arrange(DOWN, center=False, aligned_edge=LEFT)
+                    Tex(f"$-\\frac{{1}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{3}}{{{low_frac}}})$", color=RED),
+                    Tex(f"$-\\frac{{1}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{3}}{{{low_frac}}})$", color=RED),
+                    Tex(f"$-\\frac{{1}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{3}}{{{low_frac}}})$", color=RED)]).arrange(DOWN, center=False, aligned_edge=LEFT)
         
         base_eq = Tex(f"$-\\frac{{1}}{{{low_frac}}}$", color=RED).move_to(final_eq[0].get_corner(LEFT), LEFT)
         base_eq2 = Tex(f"$-\\frac{{1}}{{{low_frac}}}$", "$\log_2($", color=RED).move_to(final_eq[0].get_corner(LEFT), LEFT)
