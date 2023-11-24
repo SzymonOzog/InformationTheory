@@ -504,8 +504,12 @@ class TwoEventEntropy(Scene):
         self.play(Transform(formulas[1], arranged_formulas[1]))
         self.wait(3)
 
+        self.play(Write(formulas[2]))
+        self.wait(3)
+        self.play(Transform(formulas[2], arranged_formulas[2]))
+        self.wait(3)
 
-
+        self.play(Write(formulas[3]))
 
 
 def make_probs(p,q):
