@@ -457,9 +457,9 @@ class TwoEventEntropy(Scene):
                     Tex(f"$-\\frac{{1}}{{{low_frac}}} \log_2(\\frac{{3}}{{{low_frac}}})$", color=RED),
                     Tex(f"$-\\frac{{1}}{{{low_frac}}} \log_2(\\frac{{3}}{{{low_frac}}})$", color=RED)]).arrange(DOWN, center=False, aligned_edge=LEFT)
         
-        base_eq = Tex(f"$-\\frac{{1}}{{{low_frac}}}$", color=RED)
-        base_eq2 = Tex(f"$-\\frac{{1}}{{{low_frac}}} \log_2()$", color=RED)
-        base_eq3 = Tex(f"$-\\frac{{1}}{{{low_frac}}} \log_2(\\frac{{1}}{{{low_frac}}}+\\frac{{1}}{{{low_frac}}}+\\frac{{1}}{{{low_frac}}})$", color=RED)
+        base_eq = Tex(f"$-\\frac{{1}}{{{low_frac}}}$", color=RED).move_to(final_eq[0].get_corner(LEFT), LEFT)
+        base_eq2 = Tex(f"$-\\frac{{1}}{{{low_frac}}}$", "$\log_2($", color=RED).move_to(final_eq[0].get_corner(LEFT), LEFT)
+        base_eq3 = Tex(f"$-\\frac{{1}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{1}}{{{low_frac}}}+\\frac{{1}}{{{low_frac}}}+\\frac{{1}}{{{low_frac}}})$", color=RED).move_to(final_eq[0].get_corner(LEFT), LEFT)
         
         
         self.play(Indicate(t.get_entries((2,2))))
@@ -482,7 +482,7 @@ class TwoEventEntropy(Scene):
         self.play(Transform(i_eq, final_eq))
         self.wait(3)
 
-        old_formula = Tex("$H(X) =$", "$-\\sum\\limits_{x} p(x) \cdot \log_2\\left(p(x)\\right)$").move_to(formulas[0].get_corner(LEFT), LEFT)
+        old_formula = Tex("$H(X) =$", "$-\\sum\\limits_{x} p(x) \cdot \log_2\\left(p(x)\\right)$").move_to(formulas[0].get_corner(RIGHT), RIGHT)
         formulas[0].save_state()
         self.play(formulas[0].animate.become(old_formula))
         self.wait(3)
