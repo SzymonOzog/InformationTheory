@@ -313,7 +313,7 @@ class Entropy(Scene):
         # General Entropy Formula
         general_entropy_formula = Tex("$H(X) =$", "$\sum p(x) \cdot \log_2\\left(\\frac{1}{p(x)}\\right)$").scale(0.9).next_to(ball_text, UP)
         self.play(Write(general_entropy_formula))
-        self.wait(3)
+        self.wait(1)
 
         self.play(FadeIn(entropy_formula_2.shift(UP)), FadeIn(*balls))
         new_balls = [Dot(color=GREEN).move_to(balls[0].get_center() + 2*DOWN + i * RIGHT) for i in range(5)]
@@ -328,7 +328,7 @@ class Entropy(Scene):
         self.play(*[Indicate(x, color=GREEN_A) for x in [*new_balls, updated_entropy_formula_2[3]]])
         
 
-        self.wait(3)
+        self.wait(1)
         
 
 class EntropyBoxRepresentation:
@@ -432,7 +432,7 @@ class TwoEventEntropy(Scene):
         self.wait(2)
 
         self.play(t.animate.become(t.copy().scale(0.4).shift(2*UP+4*RIGHT)))
-        self.wait(3)
+        self.wait(1)
 
         joint_entropy_formula = Tex("$H(X,Y) =$", "$-\\sum\\limits_{x,y} p(x,y) \cdot \log_2(p(x,y))$")
         entropy_x_formula = Tex("$H(X) =$", "$-\\sum\\limits_{x,y} p(x,y) \cdot \log_2(\\sum\\limits_{y} p(x,y))$")
@@ -446,7 +446,7 @@ class TwoEventEntropy(Scene):
         formulas[0].shift(UP + 2.5*LEFT)
 
         self.play(Write(formulas[0]))
-        self.wait(3)
+        self.wait(1)
 
         low_frac = 12#$np.sum(combinations)
         final_eq = VGroup(*[
@@ -481,36 +481,36 @@ class TwoEventEntropy(Scene):
             self.play(Transform(i_eq[-1], interm_eq[1+i]))
         i_eq = VGroup(*i_eq)
         self.play(Transform(i_eq, final_eq[0]))
-        self.wait(3)
+        self.wait(1)
         self.play(Transform(i_eq, final_eq))
-        self.wait(3)
+        self.wait(1)
 
         old_formula = Tex("$H(X) =$", "$-\\sum\\limits_{x} p(x) \cdot \log_2\\left(p(x)\\right)$").move_to(formulas[0].get_corner(RIGHT), RIGHT)
         formulas[0].save_state()
         self.play(formulas[0].animate.become(old_formula))
-        self.wait(3)
+        self.wait(1)
         self.play(Restore(formulas[0]))
-        self.wait(3)
-        self.play(Transform(formulas[0], arranged_formulas[0]))
-        self.wait(3)
-
+        self.wait(1)
         self.play(FadeOut(i_eq))
+        self.play(Transform(formulas[0], arranged_formulas[0]))
+        self.wait(1)
+
 
         self.play(Write(formulas[1]))
-        self.wait(3)
+        self.wait(1)
         old_formula = Tex("$H(Y) =$", "$-\\sum\\limits_{y} p(y) \cdot \log_2\\left(p(y)\\right)$").move_to(formulas[1].get_corner(LEFT), LEFT)
         formulas[1].save_state()
         self.play(formulas[1].animate.become(old_formula))
-        self.wait(3)
+        self.wait(1)
         self.play(Restore(formulas[1]))
-        self.wait(3)
+        self.wait(1)
         self.play(Transform(formulas[1], arranged_formulas[1]))
-        self.wait(3)
+        self.wait(1)
 
         self.play(Write(formulas[2]))
-        self.wait(3)
+        self.wait(1)
         self.play(Transform(formulas[2], arranged_formulas[2]))
-        self.wait(3)
+        self.wait(1)
 
         formulas[3].shift(0.5*UP + 3*LEFT)
         self.play(Write(formulas[3]))
@@ -573,7 +573,7 @@ class BSCAnalysis(Scene):
         bsc = BSC()
         bsc.full_channel.scale(0.5).shift(DOWN+0.5*LEFT)
         self.play(Create(bsc.full_channel[:4]))
-        self.wait(3)
+        self.wait(1)
 
         self.play(Create(bsc.q_label))
         self.wait(2)
