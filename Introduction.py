@@ -468,7 +468,7 @@ class TwoEventEntropy(Scene):
         self.wait(1)
         self.play(Transform(current, base_eq2))
         self.wait(1)
-        current = VGroup(*([t.get_entries(x).copy() for x in [(2,2), (2,3), (2,4)]] + [current]))
+        current = VGroup(*([current] + [t.get_entries(x).copy() for x in [(2,2), (2,3), (2,4)]]))
         self.play(Transform(current, base_eq3))
         self.wait(1)
         self.play(Transform(current, interm_eq[0]))
