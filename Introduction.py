@@ -420,16 +420,16 @@ class TwoEventEntropy(Scene):
                         [False, True, True, True],
                         [True, False, True, True],
                         [True, True, False, True]]
-        contents = [[shape(color=color) if condition else Text("") for condition, shape in zip(row, shapes)] for row, color in zip(combinations, colors)]
-        t = MobjectTable(contents,
-                           row_labels=[Square(color=c, fill_opacity=1) for c in colors], 
-                           col_labels=[x(color=WHITE) for x in shapes]
-                           ).scale(0.4)
+        def make_table(combinations):
+            contents = [[shape(color=color) if condition else Text("") for condition, shape in zip(row, shapes)] for row, color in zip(combinations, colors)]
+            return MobjectTable(contents,
+                            row_labels=[Square(color=c, fill_opacity=1) for c in colors], 
+                            col_labels=[x(color=WHITE) for x in shapes])
+        t = make_table(combinations)
         t.get_vertical_lines()[0].set_color(RED)
         t.get_horizontal_lines()[0].set_color(RED)
         self.play(Create(t))
         self.wait(2)
-        combinations = []
 
         self.play(t.animate.become(t.copy().scale(0.4).shift(2*UP+4*RIGHT)))
         self.wait(3)
