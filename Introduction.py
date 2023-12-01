@@ -386,7 +386,13 @@ class EntropyBoxRepresentation:
                         Transform(self.boxes[3], update3), self.labels[3].animate.next_to(update3, LEFT),
                         Transform(self.boxes[4], update4), self.labels[4].animate.next_to(update4, RIGHT),
                         Transform(self.boxes[5], update5), self.labels[5].animate.next_to(update5, DOWN))
-            
+            else: 
+                self.labels[0].next_to(update0, UP)
+                self.labels[1].next_to(update1, LEFT)
+                self.labels[2].next_to(update2, RIGHT)
+                self.labels[3].next_to(update3, LEFT)
+                self.labels[4].next_to(update4, RIGHT)
+                self.labels[5].next_to(update5, DOWN)
             self.boxes[0] = update0
             self.boxes[1] = update1
             self.boxes[2] = update2
