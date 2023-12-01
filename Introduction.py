@@ -334,23 +334,24 @@ class Entropy(Scene):
 class EntropyBoxRepresentation:
         def __init__(self, probabilities=None):
             self.scale=1
-            self.base_width = 6
-            joint_entropy_box = Rectangle(width=self.base_width, height=1, fill_opacity=0.5).set_fill(GREEN).shift(UP)
+            self.base_width = 2
+            self.fill_opacity = 0.9
+            joint_entropy_box = Rectangle(width=self.base_width, height=1, fill_opacity=self.fill_opacity).set_fill(GREEN).shift(UP)
             joint_entropy_label = Tex("$H(X,Y)$",color=GREEN).next_to(joint_entropy_box, UP)
 
-            entropy_box_x = Rectangle(width=6, height=1, fill_opacity=0.5).set_fill(TEAL).shift(1*LEFT)
-            entropy_label_x = Tex("$H(X)$", color=TEAL).next_to(entropy_box_x, LEFT)
+            entropy_box_x = Rectangle(width=6, height=1, fill_opacity=self.fill_opacity).set_fill(BLUE).shift(1*LEFT)
+            entropy_label_x = Tex("$H(X)$", color=BLUE).next_to(entropy_box_x, LEFT)
             
-            entropy_box_y = Rectangle(width=4, height=1, fill_opacity=0.5).set_fill(YELLOW).shift(2*RIGHT+DOWN)
-            entropy_label_y = Tex("$H(Y)$", color=YELLOW).next_to(entropy_box_y, RIGHT)
+            entropy_box_y = Rectangle(width=4, height=1, fill_opacity=self.fill_opacity).set_fill(PURPLE).shift(2*RIGHT+DOWN)
+            entropy_label_y = Tex("$H(Y)$", color=PURPLE).next_to(entropy_box_y, RIGHT)
             
-            cond_entropy_box_x = Rectangle(width=4, height=1, fill_opacity=0.5).set_fill(TEAL_A).shift(2*LEFT+DOWN)
-            cond_entropy_label_x = Tex("$H(X|Y)$", color=TEAL_A).next_to(cond_entropy_box_x, LEFT)
+            cond_entropy_box_x = Rectangle(width=4, height=1, fill_opacity=self.fill_opacity).set_fill(BLUE_A).shift(2*LEFT+DOWN)
+            cond_entropy_label_x = Tex("$H(X|Y)$", color=BLUE_A).next_to(cond_entropy_box_x, LEFT)
             
-            cond_entropy_box_y = Rectangle(width=2, height=1, fill_opacity=0.5).set_fill(YELLOW_A).shift(3*RIGHT)
-            cond_entropy_label_y = Tex("$H(Y|X)$", color=YELLOW_A).next_to(cond_entropy_box_y, RIGHT)
+            cond_entropy_box_y = Rectangle(width=2, height=1, fill_opacity=self.fill_opacity).set_fill(PURPLE_A).shift(3*RIGHT)
+            cond_entropy_label_y = Tex("$H(Y|X)$", color=PURPLE_A).next_to(cond_entropy_box_y, RIGHT)
             
-            mutual_info_box = Rectangle(width=2, height=1, fill_opacity=0.5).set_fill(GOLD).shift(2*DOWN+RIGHT)
+            mutual_info_box = Rectangle(width=2, height=1, fill_opacity=self.fill_opacity).set_fill(GOLD).shift(2*DOWN+RIGHT)
             mutual_info_label = Tex("I(X; Y)", color=GOLD).next_to(mutual_info_box, DOWN)
 
             self.boxes = VGroup(joint_entropy_box, entropy_box_x, entropy_box_y, cond_entropy_box_x, cond_entropy_box_y, mutual_info_box)
@@ -413,7 +414,7 @@ class TwoEventEntropy(Scene):
         self.wait(1)
         self.play(FadeOut(joint_entropy_text), FadeOut(conditional_entropy_text), FadeOut(mutual_information_text))
 
-        colors = [RED, GREEN, YELLOW, BLUE]
+        colors = [RED, GREEN, RED, BLUE]
         shapes = [Square, Star, Triangle, Circle]
         
         combinations = [[True, True, True, False],
@@ -422,13 +423,14 @@ class TwoEventEntropy(Scene):
                         [True, True, False, True]]
         def make_table(combinations):
             contents = [[shape(color=color) if condition else Text("") for condition, shape in zip(row, shapes)] for row, color in zip(combinations, colors)]
-            return MobjectTable(contents,
+            t = MobjectTable(contents,
                             row_labels=[Square(color=c, fill_opacity=1) for c in colors], 
                             col_labels=[x(color=WHITE) for x in shapes])
+            t.get_vertical_lines()[0].set_color(RED)
+            t.get_horizontal_lines()[0].set_color(RED)
+            return t
         t = make_table(combinations)
-        t.get_vertical_lines()[0].set_color(RED)
-        t.get_horizontal_lines()[0].set_color(RED)
-        self.play(Create(t))
+        self.play(Create(t.scale(0.4)))
         self.wait(2)
 
         self.play(t.animate.become(t.copy().scale(0.4).shift(2*UP+4*RIGHT)))
@@ -452,7 +454,7 @@ class TwoEventEntropy(Scene):
         final_eq = VGroup(*[
                     Tex(f"$-\\frac{{3}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{3}}{{{low_frac}}})$", color=RED),
                     Tex(f"$-\\frac{{3}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{3}}{{{low_frac}}})$", color=GREEN),
-                    Tex(f"$-\\frac{{3}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{3}}{{{low_frac}}})$", color=YELLOW),
+                    Tex(f"$-\\frac{{3}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{3}}{{{low_frac}}})$", color=RED),
                     Tex(f"$-\\frac{{3}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{3}}{{{low_frac}}})$", color=BLUE)]).arrange(DOWN, center=False, aligned_edge=LEFT)
         
         interm_eq = VGroup(*[
@@ -521,7 +523,7 @@ class TwoEventEntropy(Scene):
         final_eq = VGroup(*[
                     Tex(f"$-\\frac{{3}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{1}}{{{3}}})$", color=RED),
                     Tex(f"$-\\frac{{3}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{1}}{{{3}}})$", color=GREEN),
-                    Tex(f"$-\\frac{{3}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{1}}{{{3}}})$", color=YELLOW),
+                    Tex(f"$-\\frac{{3}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{1}}{{{3}}})$", color=RED),
                     Tex(f"$-\\frac{{3}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{1}}{{{3}}})$", color=BLUE)]).arrange(DOWN, center=False, aligned_edge=LEFT)
         
         interm_eq = VGroup(*[
@@ -561,6 +563,30 @@ class TwoEventEntropy(Scene):
         self.wait(1)
         self.play(Transform(formulas[4], arranged_formulas[4]))
         self.wait(1)       
+        def make_probs(combinations):
+            num = np.sum(combinations)
+            return np.array([[float(x)/num for x in y] for y in combinations])
+        ebr = EntropyBoxRepresentation(make_probs(combinations))
+        self.play(Create(ebr.set_scale(0.4).whole.shift(DOWN+3*RIGHT)))
+        self.wait(1)
+        combinations = [[i==j for i in range(4)]for j in range(4)]
+        self.play(Transform(t, make_table(combinations).scale(0.4 * 0.4).shift(2*UP+4*RIGHT)))
+        self.wait(1)
+        ebr.update(self, make_probs(combinations))
+        self.wait(1)
+
+        combinations = [[True for i in range(4)] for j in range(4)]
+        self.play(Transform(t, make_table(combinations).scale(0.4 * 0.4).shift(2*UP+4*RIGHT)))
+        self.wait(1)
+        ebr.update(self, make_probs(combinations))
+        self.wait(1)
+        
+        joint_entropy_update = Tex("$H(X,Y) \\leq H(X) + H(Y)$")
+        Tex("$H(X,Y) = H(X) + H(Y|X)$")
+        Tex("$H(X) + H(Y) \\geq H(X,Y)$")
+        Tex("$H(X) \\geq H(X|Y)$")
+        Tex("$I(X; Y) = H(Y) - H(Y|X)$")
+        Tex("$I(X; Y) = H(Y) + H(X) - H(Y,X)$")
 def make_probs(p,q):
     return [[q * p, q * (1-p)],
             [(1-q) * (1-p), (1-q) * p]]
@@ -580,13 +606,13 @@ class BSCAnalysis(Scene):
         self.play(Create(bsc.one_minus_q_label))
 
 
-        ebr = EntropyBoxRepresentation()
+        q = 0.5
+        p = 0.9
+        ebr = EntropyBoxRepresentation(make_probs(p,q))
         ebr.set_scale(0.5).whole.shift(2*UP+2*RIGHT)
         self.play(Create(ebr.boxes), Write(ebr.labels))
         
         self.wait(2)
-        q = 0.5
-        p = 0.9
 
         q_tr = ValueTracker(q)
         p_tr = ValueTracker(p)
