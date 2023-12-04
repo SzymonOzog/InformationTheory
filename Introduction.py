@@ -717,33 +717,12 @@ class NoislessChanelTheorem(Scene):
         communication_system.add(destination)
         self.wait(1)
 
-        for x in self.mobjects:
-            x.set_color(GREEN)
-
-        noise = Square(color=RED)
-        noise.add(Text("Noise", font_size=20, color=RED))
-        noise.shift(DOWN*3)
-        communication_system.add(noise)
-        communication_system.add(Arrow( noise.get_top(), channel.get_bottom(), buff=0, max_stroke_width_to_length_ratio=1, color=RED))
-
-        for x in [channel, receiver, destination]:
-            x.set_color(YELLOW)
-        
-        self.wait(1)
-
-        # create an observer that sends error correcting data to the reciever
-        observer = Square(color=BLUE)
-        observer.add(Text("Observer", font_size=20, color=BLUE))
-        observer.shift(UP*3)
-        communication_system.add(observer)
-        communication_system.add(Arrow(channel.get_top(), observer.get_bottom(), buff=0, max_stroke_width_to_length_ratio=1, color=BLUE))
-        print(observer.get_left())
-        communication_system.add(Line(observer.get_right(), np.array([receiver.get_top()[0], observer.get_right()[1], 0]), color=BLUE))
-        communication_system.add(Arrow(np.array([receiver.get_top()[0], observer.get_right()[1], 0]), receiver.get_top(), color=BLUE, buff=0, max_stroke_width_to_length_ratio=1))
-
-        for x in [receiver, destination]:
-            x.set_color(GREEN)
-
         self.play(Create(communication_system))
+        self.wait(1)
         
+        self.add(source, channel)
+        communication_system.remove(source, channel)
+        self.wait(1)
+        self.play(FadeOut(communication_system))
+        self.play(source.animate.shift(3*RIGHT), channel.animate.shift(3*RIGHT))
         self.wait(1)
