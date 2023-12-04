@@ -675,3 +675,75 @@ class BSCAnalysis(Scene):
         ebr.update(self, np.array(make_probs(p_tr.get_value(), q_tr.get_value())))
         self.wait(2)
 
+class NoislessChanelTheorem(Scene):
+    def construct(self):
+        title = Text("THE FUNDAMENTAL THEOREM \n     FOR A NOISLESS CHANNEL")
+        self.play(Write(title))
+        self.wait(1)
+        self.play(FadeOut(title))
+
+        communication_system = VGroup() 
+        source = Square()
+        source.add(Text("Information\nSource", font_size=20,))
+        source.shift(LEFT*3)
+        communication_system.add(source)
+        
+        transmitter = Square()
+        transmitter.add(Text("Transmitter", font_size=20))
+        s_to_t = Arrow(source.get_right(), transmitter.get_left(), buff=0, max_stroke_width_to_length_ratio=1)
+        communication_system.add(transmitter)
+        communication_system.add(s_to_t)
+
+        self.wait(1) 
+        group = Group(source, s_to_t, transmitter)
+        group.shift(LEFT*3)
+
+        channel = Square()
+        channel.add(Text("Channel", font_size=20))
+        communication_system.add(Arrow(transmitter.get_right(), channel.get_left(), buff=0, max_stroke_width_to_length_ratio=1))
+        communication_system.add(channel)
+
+        receiver = Square()
+        receiver.add(Text("Receiver", font_size=20))
+        receiver.shift(RIGHT*3)
+        communication_system.add(Arrow(channel.get_right(), receiver.get_left(), buff=0, max_stroke_width_to_length_ratio=1))
+        communication_system.add(receiver)
+        self.wait(1)
+        
+        destination = Square()
+        destination.add(Text("Destination", font_size=20))
+        destination.shift(RIGHT*6)
+        communication_system.add(Arrow(receiver.get_right(), destination.get_left(), buff=0, max_stroke_width_to_length_ratio=1))
+        communication_system.add(destination)
+        self.wait(1)
+
+        for x in self.mobjects:
+            x.set_color(GREEN)
+
+        noise = Square(color=RED)
+        noise.add(Text("Noise", font_size=20, color=RED))
+        noise.shift(DOWN*3)
+        communication_system.add(noise)
+        communication_system.add(Arrow( noise.get_top(), channel.get_bottom(), buff=0, max_stroke_width_to_length_ratio=1, color=RED))
+
+        for x in [channel, receiver, destination]:
+            x.set_color(YELLOW)
+        
+        self.wait(1)
+
+        # create an observer that sends error correcting data to the reciever
+        observer = Square(color=BLUE)
+        observer.add(Text("Observer", font_size=20, color=BLUE))
+        observer.shift(UP*3)
+        communication_system.add(observer)
+        communication_system.add(Arrow(channel.get_top(), observer.get_bottom(), buff=0, max_stroke_width_to_length_ratio=1, color=BLUE))
+        print(observer.get_left())
+        communication_system.add(Line(observer.get_right(), np.array([receiver.get_top()[0], observer.get_right()[1], 0]), color=BLUE))
+        communication_system.add(Arrow(np.array([receiver.get_top()[0], observer.get_right()[1], 0]), receiver.get_top(), color=BLUE, buff=0, max_stroke_width_to_length_ratio=1))
+
+        for x in [receiver, destination]:
+            x.set_color(GREEN)
+
+        self.play(Create(communication_system))
+        
+        self.wait(1)
