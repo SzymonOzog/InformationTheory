@@ -726,3 +726,26 @@ class NoislessChanelTheorem(Scene):
         self.play(FadeOut(communication_system))
         self.play(source.animate.shift(3*RIGHT), channel.animate.shift(3*RIGHT))
         self.wait(1)
+        
+        entropy = Tex("$H(X)$").next_to(source, DOWN)
+        self.play(Write(entropy))
+        self.wait(1)
+
+        capacity = Tex("$C =  \\lim_{T \\to \\infty} \\frac{N(T)}{T}$").next_to(channel, DOWN)
+        self.play(Write(capacity))
+        self.wait(1)
+
+        self.play(FadeOut(source, entropy))
+        self.play(capacity.animate.shift(3*LEFT), channel.animate.shift(3*LEFT))
+        self.wait(1)
+
+        for i in range(3):
+            random_binary = "".join(["0" if random() > 0.5 else "1" for i in range(5)])
+            sent_message = Tex(random_binary).next_to(channel, LEFT).shift(LEFT)
+            recieved_message = sent_message.copy().next_to(channel, RIGHT).shift(RIGHT)
+            self.play(Write(sent_message))
+            self.play(FadeOut(sent_message, target_position=channel.get_left()))
+            # self.play(ApplyWave(channel, direction=RIGHT, time_width=0.2, amplitude=0.1))
+            self.play(FadeIn(recieved_message, target_position=channel.get_right()))
+            self.play(FadeOut(recieved_message))
+        self.wait(1)
