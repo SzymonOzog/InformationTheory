@@ -727,7 +727,7 @@ class NoislessChanelTheorem(Scene):
         self.play(source.animate.shift(3*RIGHT), channel.animate.shift(3*RIGHT))
         self.wait(1)
         
-        entropy = Tex("$H(X)$").next_to(source, DOWN)
+        entropy = Tex("$H$").next_to(source, DOWN)
         self.play(Write(entropy))
         self.wait(1)
 
@@ -748,4 +748,64 @@ class NoislessChanelTheorem(Scene):
             # self.play(ApplyWave(channel, direction=RIGHT, time_width=0.2, amplitude=0.1))
             self.play(FadeIn(recieved_message, target_position=channel.get_right()))
             self.play(FadeOut(recieved_message))
+            
+        self.play(capacity.animate.shift(3*RIGHT), channel.animate.shift(3*RIGHT))
+        self.play(FadeIn(source, entropy), Transform(capacity, Tex("$C$").next_to(channel, DOWN)))
+        self.wait(1)
+
+        possible_rate = Tex("$Rate = \\frac{C}{H} - \\epsilon$")
+        self.play(Write(possible_rate))
+        self.wait(1)
+
+        self.play(Transform(capacity, Tex("$C=2\\frac{bits}{s}$").next_to(channel, DOWN)))
+
+        weather_conditions = VGroup(*[Text(x) for x in ["Sunny", "Rainy","Cloudy","Snowy","Windy","Stormy","Foggy","Drizzle"]])
+        weather_conditions.arrange(DOWN, aligned_edge=LEFT).shift(6*LEFT).scale(0.6)
+
+        probabilities = [0.6,0.05,0.2,0.01,0.05,0.01,0.03,0.05]
+
+        self.play(Write(weather_conditions))
+        self.wait(1)
+        print(sum([x*math.log2(1/x) for x in probabilities]), sum(probabilities))
+
+        encodings = VGroup(*[Tex(x).scale(0.6).next_to(weather_conditions[i]) for i, x in enumerate(create_binary_digits(3))])
+        self.play(Write(encodings))
+        self.wait(1)
+        
+        def update_entropy(current_entropy, additional=None): 
+            equality = '=' if current_entropy == 0 else '\\approxeq'
+            old = VGroup(entropy)
+            if additional != None:
+                old.add(additional)
+            self.play(Transform(old, Tex(f"$H{equality}{current_entropy:.2f}$").next_to(source, DOWN)))
+        current_entropy = 0
+        update_entropy(current_entropy)
+
+        written_probs = VGroup(*[Tex(str(x)).scale(0.6).next_to(weather_conditions[i], LEFT)  for i,x in enumerate(probabilities)])
+        self.play(Write(written_probs))
+        self.wait(1)
+
+        entropy_text = Tex("$H(X)=\\sum\\limits_{x}$","$p(x)$", "$\\cdot \\log_2($", "$\\frac{1}{p(x)}$", "$)$").shift(2*UP)
+        self.play(Write(entropy_text))
+        self.wait(1)
+        
+        def transform_entropy(p): 
+            self.play(entropy_text.animate.become(Tex("$H(X)=\\sum\\limits_{x}$",f"${p}$", "$\\cdot \\log_2($", f"$\\frac{{1}}{{{p}}}$", "$)$").shift(2*UP)))
+        for i,p in enumerate(probabilities):
+            self.play(written_probs[i].animate.set_color(GREEN))
+            self.play(FadeOut(written_probs[i].copy(), target_position=entropy_text.get_center()))
+            transform_entropy(p)
+
+            partial = p*math.log2(1/p)
+            current_entropy+=(partial)
+            partial_text=Tex(f"$\\approxeq{partial:.2f}$").next_to(entropy_text)
+            self.play(Write(partial_text))
+            update_entropy(current_entropy, partial_text)
+        
+        self.play(Transform(possible_rate, Tex(f"$Rate = \\frac{{2}}{{{current_entropy:.2f}}} - \\epsilon$")))
+        self.play(Transform(possible_rate, Tex(f"$Rate \\approxeq {(2/current_entropy):.2f}$")))
+
+        huffman_codings = [Tex(c).scale(0.6).next_to(weather_conditions[i]) for i,c in enumerate(["0", "1100", "10", "111000", "1101", "111001", "11101", "1111"])]
+        self.play(*[Transform(e,h) for e,h in zip(encodings, huffman_codings)])
+        print(sum([pr * len(c) for pr, c in zip(probabilities,["0", "1100", "10", "111000", "1101", "111001", "11101", "1111"])]))
         self.wait(1)
