@@ -675,7 +675,7 @@ class BSCAnalysis(Scene):
         ebr.update(self, np.array(make_probs(p_tr.get_value(), q_tr.get_value())))
         self.wait(2)
 
-class NoislessChanelTheorem(Scene):
+class NoislessChanelTheorem(MovingCameraScene):
     def construct(self):
         title = Text("THE FUNDAMENTAL THEOREM \n     FOR A NOISLESS CHANNEL")
         self.play(Write(title))
@@ -758,7 +758,7 @@ class NoislessChanelTheorem(Scene):
         self.wait(1)
 
         self.play(Transform(capacity, Tex("$C=2\\frac{bits}{s}$").next_to(channel, DOWN)))
-
+        self.play(self.camera.frame.animate.scale(1.3))
         weather_conditions = VGroup(*[Text(x) for x in ["Sunny", "Rainy","Cloudy","Snowy","Windy","Stormy","Foggy","Drizzle"]])
         weather_conditions.arrange(DOWN, aligned_edge=LEFT).shift(6*LEFT).scale(0.6)
 
@@ -766,7 +766,6 @@ class NoislessChanelTheorem(Scene):
 
         self.play(Write(weather_conditions))
         self.wait(1)
-        print(sum([x*math.log2(1/x) for x in probabilities]), sum(probabilities))
 
         encodings = VGroup(*[Tex(x).scale(0.6).next_to(weather_conditions[i]) for i, x in enumerate(create_binary_digits(3))])
         self.play(Write(encodings))
@@ -807,5 +806,27 @@ class NoislessChanelTheorem(Scene):
 
         huffman_codings = [Tex(c).scale(0.6).next_to(weather_conditions[i]) for i,c in enumerate(["0", "1100", "10", "111000", "1101", "111001", "11101", "1111"])]
         self.play(*[Transform(e,h) for e,h in zip(encodings, huffman_codings)])
-        print(sum([pr * len(c) for pr, c in zip(probabilities,["0", "1100", "10", "111000", "1101", "111001", "11101", "1111"])]))
+        self.wait(1)
+
+        average_length = Tex("$L=$", "$\\sum p(x) \\cdot length(x)$").next_to(possible_rate, 7*DOWN)
+        self.play(Write(average_length))
+        length_formulas = VGroup()
+        lengths = []
+
+        for i, c in enumerate(["0", "1100", "10", "111000", "1101", "111001", "11101", "1111"]):
+            length_formulas.add(Tex(f'${probabilities[i]} * {len(c)}{"" if i == 7 else " + "}$'))
+            lengths.append(probabilities[i] * len(c))
+
+        length_formulas.arrange_in_grid(2,4).next_to(average_length, DOWN)
+
+        self.wait(1)
+        for i in range(len(probabilities)):
+            self.play(Transform(VGroup(encodings[i].copy(), written_probs[i].copy()), length_formulas[i]))
+        self.wait(1)
+
+        self.play(Transform(VGroup(average_length, length_formulas),Tex("$L=$", f"${sum(lengths)}$").next_to(possible_rate, DOWN) ))
+        self.wait(1)
+        self.play(Transform(possible_rate, Tex("$R=$", "$\\frac{C}{L}$")))
+        self.wait(1)
+        self.play(Transform(possible_rate, Tex("$R=$", f"${(2/sum(lengths)):.2f}$")))
         self.wait(1)
