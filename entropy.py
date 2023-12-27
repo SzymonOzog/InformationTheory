@@ -27,7 +27,7 @@ def HX_g_Y(p):
     ret = 0.0
     for i in range(p.shape[0]):
         for j in range(p.shape[1]):
-            pi_g_j = p[i,j]/np.sum(p[i,:])
+            pi_g_j = p[i,j]/np.sum(p[:,j])
             ret -= p[i,j] * math.log2(pi_g_j+EPS)
     return ret
     
@@ -36,7 +36,7 @@ def HY_g_X(p):
     ret = 0.0
     for i in range(p.shape[0]):
         for j in range(p.shape[1]):
-            pj_g_i = p[i,j]/np.sum(p[:,j])
+            pj_g_i = p[i,j]/np.sum(p[i,:])
             ret -= p[i,j] * math.log2(pj_g_i+EPS)
     return ret
 
