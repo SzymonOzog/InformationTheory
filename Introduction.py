@@ -332,9 +332,9 @@ class Entropy(Scene):
         
 
 class EntropyBoxRepresentation:
-        def __init__(self, probabilities=None):
+        def __init__(self, probabilities=None, base_width=2):
             self.scale=1
-            self.base_width = 2
+            self.base_width = base_width 
             self.fill_opacity = 0.9
             joint_entropy_box = Rectangle(width=self.base_width, height=1, fill_opacity=self.fill_opacity).set_fill(GREEN).shift(UP)
             joint_entropy_label = Tex("$H(X,Y)$",color=GREEN).next_to(joint_entropy_box, UP)
@@ -830,3 +830,144 @@ class NoislessChanelTheorem(MovingCameraScene):
         self.wait(1)
         self.play(Transform(possible_rate, Tex("$R=$", f"${(2/sum(lengths)):.2f}$")))
         self.wait(1)
+
+class NoisyChannelTheorem(Scene):
+    def construct(self):
+        title = Text("THE FUNDAMENTAL THEOREM \n             FOR A NOISY CHANNEL")
+        self.play(Write(title))
+        self.wait(1)
+        self.play(FadeOut(title))
+
+        communication_system = VGroup() 
+        source = Square()
+        source.add(Text("Information\nSource", font_size=20,))
+        source.shift(LEFT*3)
+        communication_system.add(source)
+        
+        transmitter = Square()
+        transmitter.add(Text("Transmitter", font_size=20))
+        s_to_t = Arrow(source.get_right(), transmitter.get_left(), buff=0, max_stroke_width_to_length_ratio=1)
+        communication_system.add(transmitter)
+        communication_system.add(s_to_t)
+
+        self.wait(1) 
+        group = Group(source, s_to_t, transmitter)
+        group.shift(LEFT*3)
+
+        channel = Square()
+        channel.add(Text("Channel", font_size=20))
+        communication_system.add(Arrow(transmitter.get_right(), channel.get_left(), buff=0, max_stroke_width_to_length_ratio=1))
+        communication_system.add(channel)
+
+        receiver = Square()
+        receiver.add(Text("Receiver", font_size=20))
+        receiver.shift(RIGHT*3)
+        communication_system.add(Arrow(channel.get_right(), receiver.get_left(), buff=0, max_stroke_width_to_length_ratio=1))
+        communication_system.add(receiver)
+        self.wait(1)
+        
+        destination = Square()
+        destination.add(Text("Destination", font_size=20))
+        destination.shift(RIGHT*6)
+        communication_system.add(Arrow(receiver.get_right(), destination.get_left(), buff=0, max_stroke_width_to_length_ratio=1))
+        communication_system.add(destination)
+        self.wait(1)
+
+        noise = Square(color=RED)
+        noise.add(Text("Noise", font_size=20, color=RED))
+        noise.shift(DOWN*3)
+        communication_system.add(noise)
+        communication_system.add(Arrow( noise.get_top(), channel.get_bottom(), buff=0, max_stroke_width_to_length_ratio=1, color=RED))
+
+        self.play(Create(communication_system))
+        self.wait(1)
+
+        bsc = BSC()
+        bsc.full_channel.scale(0.7)        
+
+        source_arrows = VGroup(Arrow(source.get_right(), bsc.input_bit_0.get_left(), buff=0.25, max_stroke_width_to_length_ratio=1, max_tip_length_to_length_ratio=0.1),
+                               Arrow(source.get_right(), bsc.input_bit_1.get_left(), buff=0.25, max_stroke_width_to_length_ratio=1, max_tip_length_to_length_ratio=0.1))
+        destination_arrows = VGroup(Arrow(bsc.output_bit_0.get_right(), destination.get_left(), buff=0.25, max_stroke_width_to_length_ratio=1, max_tip_length_to_length_ratio=0.1),
+                                    Arrow(bsc.output_bit_1.get_right(), destination.get_left(), buff=0.25, max_stroke_width_to_length_ratio=1, max_tip_length_to_length_ratio=0.1))
+
+        bsc.q_label.next_to(source_arrows[0], 0.1*UP)
+        bsc.one_minus_q_label.next_to(source_arrows[1], 0.1*DOWN)
+    
+        self.add(source, destination)
+        communication_system.remove(source, destination)
+        self.wait(1)
+        self.play(Transform(communication_system, VGroup(bsc.full_channel, source_arrows, destination_arrows)))
+        self.wait(1)
+
+        q = 0.7
+        p = 0.9
+        q_tr = ValueTracker(q)
+        p_tr = ValueTracker(p)
+        p_text = Tex("$p=$", f"${p_tr.get_value()}$").add_updater(lambda x: x.become(Tex("$p=$",f"${p_tr.get_value():.2f}$"), match_center=True)).next_to(bsc.full_channel, DOWN+RIGHT)
+        q_text = Tex("$q=$", f"${q_tr.get_value()}$").add_updater(lambda x: x.become(Tex("$q=$",f"${q_tr.get_value():.2f}$"), match_center=True)).next_to(bsc.full_channel, DOWN+LEFT)
+        self.play(Write(p_text), Write(q_text))
+        communication_system.add(p_text, q_text, source, destination)
+        self.play(communication_system.animate.scale(0.5).shift(2*LEFT+2*UP))
+
+        rate = Tex("$R=$").shift(DOWN)
+        self.play(Write(rate))
+        self.wait(1)
+
+        self.play(Transform(rate, Tex("$R$", "$=length(transmited) \\cdot p$", f"$=1000 \\cdot {p_tr.get_value()}$", f"$={1000*p_tr.get_value()}$").shift(DOWN)))
+        self.play(rate.animate.set_color(RED))
+        self.wait(1)
+
+        # rate.add_updater(lambda x: x.become(Tex("$R$", "$=length(transmited) \\cdot p$", f"$=1000 \\cdot {p_tr.get_value():.2f}$", f"$={1000*p_tr.get_value():.2f}$").shift(DOWN).set_color(RED)))
+        self.play(p_tr.animate.set_value(0.5))
+        self.wait(1)
+        self.play(p_tr.animate.set_value(0.0))
+        self.wait(1)
+
+        p_tr.set_value(0.9)
+    
+        ebr = EntropyBoxRepresentation(make_probs(p,q), base_width=3)
+        ebr.set_scale(0.5).whole.next_to(communication_system, RIGHT)
+        self.play(Create(ebr.whole))
+        self.wait(1)
+
+        self.play(Transform(rate, Tex("$R=$", "$H(X) - H(X|Y)$").shift(DOWN).set_color(GREEN)))
+        self.wait(1)
+        self.play(Transform(rate, Tex("$R=$", "$I(X; Y)$").shift(DOWN).set_color(GREEN)))
+        def mutual_inf():  return f"{I(np.array(make_probs(p_tr.get_value(),q_tr.get_value()))):.2f}"
+        self.play(Transform(rate, Tex("$R=$", "$I(X; Y)$", f"$={mutual_inf()}$").shift(DOWN).set_color(GREEN)))
+        capacity = Tex("$C = Max(R)$")
+        self.play(Create(capacity))
+        self.wait(1)
+        q_tr.set_value(0.5)
+        self.play(Transform(rate, Tex("$R=$", "$I(X; Y)$", f"$={mutual_inf()}$").shift(DOWN).set_color(GREEN)))
+        self.wait(1)
+        self.play(Transform(capacity, Tex("$C = Max(R)$", f"$={mutual_inf()}$")))
+        self.wait(1)
+
+        self.play(FadeOut(ebr.whole, communication_system, source, destination, p_text, q_text),
+                  Transform(rate, Tex("$R=$", "$I(X; Y)$").shift(DOWN + 3*RIGHT)),
+                  Transform(capacity, Tex("$C = Max(R)$").shift(3*RIGHT)))
+
+        self.wait(1)
+        
+        ax = Axes(x_range=[0,1], y_range=[0,1], x_length=8, y_length=8)
+        labels = VGroup(ax.get_x_axis_label(label=Tex("$H(X)$"), edge=DOWN, direction=DOWN).shift(DOWN), ax.get_y_axis_label(label=Tex("$H(X|Y)$"), edge=LEFT, direction=LEFT))
+        
+        graph = ax.plot_line_graph(x_values=[0,0.3,1], y_values=[0,0,0.7])
+
+        c_label = Tex("C").next_to(ax.c2p(0.3,0), DOWN)
+
+        attainable = Polygon(*graph.get_points_defining_boundary(), ax.c2p(1,1), ax.c2p(0,1), fill_color=GREEN, fill_opacity=0.7, stroke_width=0)
+        attainable_text = Tex("$attainable$").move_to(attainable.get_center())
+        attainable.add(attainable_text)
+
+        non_attainable = Polygon(ax.c2p(0.3,0), ax.c2p(1,0), ax.c2p(1,0.7), fill_color=RED, fill_opacity=0.7,stroke_width=0)
+        non_attainable_text = Tex("$non-attainable$").move_to(non_attainable.get_center_of_mass())
+        non_attainable.add(non_attainable_text)
+
+        ar_plot = VGroup(*[ax, labels, graph, c_label, attainable, non_attainable]).scale(0.6).shift(3*LEFT)
+        self.play(Create(ar_plot))
+        self.wait(1)
+                
+        
+        
