@@ -970,4 +970,22 @@ class NoisyChannelTheorem(Scene):
         self.wait(1)
                 
         
-        
+class NoisyChannelTheorem2(Scene):
+    def construct(self):
+        source_message = VGroup(*[Tex(x).scale(0.6) for x in create_binary_digits(3)]).arrange(DOWN)
+        recieved_message = source_message.copy()
+        self.play(Create(source_message))
+        self.wait(1)
+        self.play(source_message.animate.shift(LEFT))
+        self.play(Create(recieved_message.shift(RIGHT)))
+        self.wait(1)
+
+        # self.play(*[x.animate.set_color(GREEN if i==0 or i==7 else RED) for i,x in enumerate(source_message)])
+        rect1 = SurroundingRectangle(source_message[0])
+        lines1 = VGroup(*[Line(rect1.get_right(), x.get_left()) for i, x in enumerate(recieved_message) if i in [0,1,2,4] ])
+        self.play(Create(rect1), Create(lines1))
+        self.wait(1)
+        rect2 = SurroundingRectangle(source_message[7])
+        lines2 = VGroup(*[Line(rect2.get_right(), x.get_left()) for i, x in enumerate(recieved_message) if i not in [0,1,2,4] ])
+        self.play(Create(rect2), Create(lines2))
+        self.wait(1)
