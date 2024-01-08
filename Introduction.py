@@ -53,15 +53,15 @@ class CommunicationSystem(Scene):
         
         self.wait(1)
 
-        # create an observer that sends error correcting data to the reciever
-        observer = Square(color=BLUE)
-        observer.add(Text("Observer", font_size=20, color=BLUE))
-        observer.shift(UP*3)
-        self.play(Create(observer))
-        self.play(Create(Arrow(channel.get_top(), observer.get_bottom(), buff=0, max_stroke_width_to_length_ratio=1, color=BLUE)))
-        print(observer.get_left())
-        self.play(Create(Line(observer.get_right(), np.array([receiver.get_top()[0], observer.get_right()[1], 0]), color=BLUE)))
-        self.play(Create(Arrow(np.array([receiver.get_top()[0], observer.get_right()[1], 0]), receiver.get_top(), color=BLUE, buff=0, max_stroke_width_to_length_ratio=1)))
+
+        encoding = Text("Encoding", font_size=20, color=GREEN).next_to(transmitter.submobjects[0], DOWN)
+        encoding_box = SurroundingRectangle(encoding, color=GREEN)
+        transmitter.add(encoding)
+        decoding = Text("Decoding", font_size=20, color=GREEN).next_to(receiver.submobjects[0], DOWN)
+        decoding_box = SurroundingRectangle(decoding, color=GREEN)
+        receiver.add(decoding)
+        self.play(Create(encoding), Create(decoding),
+                  Create(encoding_box), Create(decoding_box))
 
         for x in [receiver, destination]:
             self.play(x.animate.set_color(GREEN))
