@@ -739,7 +739,7 @@ class NoislessChanelTheorem(MovingCameraScene):
         self.play(capacity.animate.shift(3*LEFT), channel.animate.shift(3*LEFT))
         self.wait(1)
 
-        for i in range(3):
+        for i in range(1):
             random_binary = "".join(["0" if random() > 0.5 else "1" for i in range(5)])
             sent_message = Tex(random_binary).next_to(channel, LEFT).shift(LEFT)
             recieved_message = sent_message.copy().next_to(channel, RIGHT).shift(RIGHT)
