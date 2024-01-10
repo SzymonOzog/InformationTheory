@@ -972,21 +972,55 @@ class NoisyChannelTheorem(Scene):
         
 class NoisyChannelTheorem2(Scene):
     def construct(self):
-        source_message = VGroup(*[Tex(x).scale(0.6) for x in create_binary_digits(3)]).arrange(DOWN)
-        received_message = source_message.copy()
-        self.play(Create(source_message))
-        self.wait(1)
-        self.play(source_message.animate.shift(LEFT))
-        self.play(Create(received_message.shift(RIGHT)))
+        communication_system = VGroup() 
+        source = Square()
+        source.add(Text("Information\nSource", font_size=20,))
+        source.shift(LEFT*3)
+        communication_system.add(source)
+        
+        transmitter = Square()
+        transmitter.add(Text("Transmitter", font_size=20))
+        s_to_t = Arrow(source.get_right(), transmitter.get_left(), buff=0, max_stroke_width_to_length_ratio=1)
+        communication_system.add(transmitter)
+        communication_system.add(s_to_t)
+
+        group = Group(source, s_to_t, transmitter)
+        group.shift(LEFT*3)
+
+        channel = Square()
+        channel.add(Text("Channel", font_size=20))
+        communication_system.add(Arrow(transmitter.get_right(), channel.get_left(), buff=0, max_stroke_width_to_length_ratio=1))
+        communication_system.add(channel)
+
+        receiver = Square()
+        receiver.add(Text("Receiver", font_size=20))
+        receiver.shift(RIGHT*3)
+        communication_system.add(Arrow(channel.get_right(), receiver.get_left(), buff=0, max_stroke_width_to_length_ratio=1))
+        communication_system.add(receiver)
+        
+        destination = Square()
+        destination.add(Text("Destination", font_size=20))
+        destination.shift(RIGHT*6)
+        communication_system.add(Arrow(receiver.get_right(), destination.get_left(), buff=0, max_stroke_width_to_length_ratio=1))
+        communication_system.add(destination)
+
+        noise = Square(color=RED)
+        noise.add(Text("Noise", font_size=20, color=RED))
+        noise.shift(DOWN*3)
+        communication_system.add(noise)
+        communication_system.add(Arrow( noise.get_top(), channel.get_bottom(), buff=0, max_stroke_width_to_length_ratio=1, color=RED))
+
+        encoding = Text("Encoding", font_size=20).next_to(transmitter.submobjects[0], DOWN)
+        encoding_box = SurroundingRectangle(encoding)
+        encoding_box.add(encoding)
+
+        decoding = Text("Decoding", font_size=20).next_to(receiver.submobjects[0], DOWN)
+        decoding_box = SurroundingRectangle(decoding)
+        decoding_box.add(decoding)
+        self.play(Create(communication_system), Create(decoding_box), Create(encoding_box))
         self.wait(1)
 
-        # self.play(*[x.animate.set_color(GREEN if i==0 or i==7 else RED) for i,x in enumerate(source_message)])
-        rect1 = SurroundingRectangle(source_message[0])
-        lines1 = VGroup(*[Line(rect1.get_right(), x.get_left()) for i, x in enumerate(received_message) if i in [0,1,2,4] ])
-        self.play(Create(rect1), Create(lines1))
-        self.wait(1)
-
-        rect2 = SurroundingRectangle(source_message[7])
-        lines2 = VGroup(*[Line(rect2.get_right(), x.get_left()) for i, x in enumerate(received_message) if i not in [0,1,2,4] ])
-        self.play(Create(rect2), Create(lines2))
-        self.wait(1)
+        self.remove(encoding_box, decoding_box)
+        self.play(Indicate(encoding_box), Indicate(decoding_box))
+        self.add(encoding_box, decoding_box)
+        self.play(FadeOut(communication_system), encoding_box.animate.shift(3*UP), decoding_box.animate.shift(3*UP))
