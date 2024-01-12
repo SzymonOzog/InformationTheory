@@ -1004,11 +1004,11 @@ class NoisyChannelTheorem2(Scene):
         communication_system.add(Arrow(receiver.get_right(), destination.get_left(), buff=0, max_stroke_width_to_length_ratio=1))
         communication_system.add(destination)
 
-        noise = Square(color=RED)
-        noise.add(Text("Noise", font_size=20, color=RED))
-        noise.shift(DOWN*3)
+        noise_text = Text("Noise", font_size=20, color=RED)
+        noise=SurroundingRectangle(noise_text, color=RED)
+        noise.add(noise_text)
+        noise.next_to(channel.submobjects[0], DOWN)
         communication_system.add(noise)
-        communication_system.add(Arrow( noise.get_top(), channel.get_bottom(), buff=0, max_stroke_width_to_length_ratio=1, color=RED))
 
         encoding = Text("Encoding", font_size=20, color=BLUE).next_to(transmitter.submobjects[0], DOWN)
         encoding_box = SurroundingRectangle(encoding, color=BLUE)
