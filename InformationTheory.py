@@ -1075,7 +1075,7 @@ class NoisyChannelTheorem2(Scene):
             noise_arrows.extend([a1,a2])
             self.play(Create(a1), Create(a2), Create(target2), Create(target1))
 
-        decoded_message = VGroup(*[Tex(str(x)).scale(0.6) for x in range(1,5)]).arrange(DOWN).shift(RIGHT)
+        decoded_message = VGroup(*[Tex(str(x)).scale(0.6) for x in range(0,4)]).arrange(DOWN).shift(RIGHT)
         decoding_arrows = []
         for i in range(0, len(received_message), 2):
             src1 = received_message[i]
