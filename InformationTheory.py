@@ -66,9 +66,11 @@ class CommunicationSystem(Scene):
         for x in [receiver, destination]:
             self.play(x.animate.set_color(GREEN))
 
+def to_binary(i, len):
+    return bin(i)[2:].zfill(len)
 
 def create_binary_digits(len):
-    return [bin(i)[2:].zfill(len) for i in range(2**len)]
+    return [to_binary(i, len) for i in range(2**len)]
 
 
 class InformationContent(Scene):
@@ -1024,3 +1026,73 @@ class NoisyChannelTheorem2(Scene):
         self.play(Indicate(encoding_box), Indicate(decoding_box))
         self.add(encoding_box, decoding_box)
         self.play(FadeOut(communication_system), encoding_box.animate.shift(3*UP), decoding_box.animate.shift(3*UP))
+        
+        source_message = VGroup(*[Tex(str(x)).scale(0.6) for x in range(0,4)]).arrange(DOWN)
+        received_message = VGroup(*[Tex(str(x)).scale(0.6) for x in range(0,5)]).arrange(DOWN)
+        self.play(Create(source_message))
+        self.wait(1)
+        self.play(source_message.animate.shift(LEFT))
+        # self.play(Create(received_message.shift(RIGHT)))
+        self.wait(1)
+
+        arrows = []
+        for i in range(4):
+            src = source_message[i]
+            target1 = received_message[i]
+            target2 = received_message[i+1]
+            a1 = Line(src.get_right(), target1.get_left())
+            a2 = Line(src.get_right(), target2.get_left()) 
+            arrows.extend([a1,a2])
+            if i == 0:
+                self.play(Create(target1))
+            self.play(Create(a1), Create(a2), Create(target2))
+
+        self.play(FadeOut(source_message[1], source_message[3],
+                          *arrows[2:4], *arrows[6:]))
+        self.wait(1)
+        self.play(FadeIn(source_message[1], source_message[3],
+                          *arrows[2:4], *arrows[6:]))
+        self.wait(1)
+
+        self.play(FadeOut(*arrows, received_message))
+        encoded_message = VGroup(*[Tex(str(x)).scale(0.6) for x in range(0,8,2)]).arrange(DOWN).shift(LEFT)
+        self.play(source_message.animate.shift(LEFT))
+
+        encoded_lines = []
+        for i in range(len(encoded_message)):
+            encoded_lines.append(Line(source_message[i].get_right(), encoded_message[i].get_left()))
+            self.play(Create(encoded_message[i]), Create(encoded_lines[i]))
+        self.wait(1)
+        received_message = VGroup(*[Tex(str(x)).scale(0.6) for x in range(0,8)]).arrange(DOWN)
+
+        noise_arrows = []
+        for i in range(0, len(received_message), 2):
+            src = encoded_message[i//2]
+            target1 = received_message[i]
+            target2 = received_message[i+1]
+            a1 = Line(src.get_right(), target1.get_left())
+            a2 = Line(src.get_right(), target2.get_left()) 
+            noise_arrows.extend([a1,a2])
+            self.play(Create(a1), Create(a2), Create(target2), Create(target1))
+
+        decoded_message = VGroup(*[Tex(str(x)).scale(0.6) for x in range(1,5)]).arrange(DOWN).shift(RIGHT)
+        decoding_arrows = []
+        for i in range(0, len(received_message), 2):
+            src1 = received_message[i]
+            src2 = received_message[i+1]
+            target = decoded_message[i//2]
+            a1 = Line(src1.get_right(), target.get_left())
+            a2 = Line(src2.get_right(), target.get_left()) 
+            decoding_arrows.extend([a1,a2])
+            self.play(Create(a1), Create(a2), Create(target))
+
+        self.wait(1)
+        self.play(Create(communication_system.shift(3*UP)))
+        self.play(FadeOut(*decoding_arrows, *noise_arrows, *encoded_lines, *arrows))
+        self.wait(1)
+
+        for grp in [source_message, encoded_message, received_message, decoded_message]:
+            for src in grp:
+                binary_text = Tex(to_binary(int(src.get_tex_string()), 3)).scale(0.6).move_to(src)
+                self.play(Transform(src, binary_text, run_time=0.1))
+        self.wait(1)
