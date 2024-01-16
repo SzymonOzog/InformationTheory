@@ -972,6 +972,10 @@ class NoisyChannelTheorem(Scene):
         self.wait(1)
                 
         
+def combine_positions(a,b,mask): 
+    mask = np.array(mask)
+    return a*mask + b*(1-mask)
+
 class NoisyChannelTheorem2(Scene):
     def construct(self):
         communication_system = VGroup() 
@@ -1025,70 +1029,90 @@ class NoisyChannelTheorem2(Scene):
         self.remove(encoding_box, decoding_box)
         self.play(Indicate(encoding_box), Indicate(decoding_box))
         self.add(encoding_box, decoding_box)
-        self.play(FadeOut(communication_system), encoding_box.animate.shift(3*UP), decoding_box.animate.shift(3*UP))
+        self.play(FadeOut(encoding_box), FadeOut(decoding_box))
+        self.play(communication_system.animate.shift(3*UP))
+        encoding_box.shift(3*UP)
+        decoding_box.shift(3*UP)
         
         source_message = VGroup(*[Tex(str(x)).scale(0.6) for x in range(0,4)]).arrange(DOWN)
-        received_message = VGroup(*[Tex(str(x)).scale(0.6) for x in range(0,5)]).arrange(DOWN)
-        self.play(Create(source_message))
-        self.wait(1)
-        self.play(source_message.animate.shift(LEFT))
-        # self.play(Create(received_message.shift(RIGHT)))
-        self.wait(1)
+        source_message.move_to(combine_positions(source.get_center(), source_message.get_center(), [1,0,0]))
 
-        arrows = []
+        transmitted_message = VGroup(*[Tex(str(x)).scale(0.6) for x in range(0,4)]).arrange(DOWN)
+        transmitted_message.move_to(combine_positions(transmitter.get_center(), transmitted_message.get_center(), [1,0,0]))
+
+        received_message = VGroup(*[Tex(str(x)).scale(0.6) for x in range(0,5)]).arrange(DOWN)
+        received_message = received_message.move_to(combine_positions(receiver.get_center(), received_message.get_center(), [1,0,0]))
+
+        destination_message = VGroup(*[Tex(str(x)).scale(0.6) for x in range(0,5)]).arrange(DOWN)
+        destination_message = destination_message.move_to(combine_positions(destination.get_center(), destination_message.get_center(), [1,0,0]))
+
+        self.play(Transform(source.copy(), source_message, replace_mobject_with_target_in_scene=True))
+        self.play(Transform(transmitter.copy(), transmitted_message, replace_mobject_with_target_in_scene=True))
+
+        s_t_arrows = VGroup(*[Line(s.get_right(), t.get_left()) for s,t in zip(source_message, transmitted_message)])
+        r_d_arrows = VGroup(*[Line(r.get_right(), d.get_left()) for r,d in zip(received_message, destination_message)])
+        self.play(Create(s_t_arrows))
+
+        self.wait(1)
+        t_r_arrows = []
         for i in range(4):
-            src = source_message[i]
+            src = transmitted_message[i]
             target1 = received_message[i]
             target2 = received_message[i+1]
-            a1 = Line(src.get_right(), target1.get_left())
-            a2 = Line(src.get_right(), target2.get_left()) 
-            arrows.extend([a1,a2])
+            a1 = Line(src.get_right(), target1.get_left(), color=GREEN)
+            a2 = Line(src.get_right(), target2.get_left(), color=RED) 
+            t_r_arrows.extend([a1,a2])
             if i == 0:
                 self.play(Create(target1))
             self.play(Create(a1), Create(a2), Create(target2))
 
+        self.play(Transform(destination.copy(), destination_message, replace_mobject_with_target_in_scene=True))
+        self.play(Create(r_d_arrows))
+
         self.play(FadeOut(source_message[1], source_message[3],
-                          *arrows[2:4], *arrows[6:]))
+                          *t_r_arrows[2:4], *t_r_arrows[6:]))
         self.wait(1)
         self.play(FadeIn(source_message[1], source_message[3],
-                          *arrows[2:4], *arrows[6:]))
+                          *t_r_arrows[2:4], *t_r_arrows[6:]))
         self.wait(1)
 
-        self.play(FadeOut(*arrows, received_message))
-        encoded_message = VGroup(*[Tex(str(x)).scale(0.6) for x in range(0,8,2)]).arrange(DOWN).shift(LEFT)
-        self.play(source_message.animate.shift(LEFT))
+        self.play(FadeOut(*t_r_arrows, *r_d_arrows, received_message, destination_message))
 
-        encoded_lines = []
-        for i in range(len(encoded_message)):
-            encoded_lines.append(Line(source_message[i].get_right(), encoded_message[i].get_left()))
-            self.play(Create(encoded_message[i]), Create(encoded_lines[i]))
+        encoded_message = VGroup(*[Tex(str(x)).scale(0.6) for x in range(0,8,2)]).arrange(DOWN).shift(LEFT)
+        encoded_message.move_to(combine_positions(transmitter.get_center(), encoded_message.get_center(), [1,0,0]))
+        self.play(FadeIn(encoding_box))
+        self.play(*[Transform(t, e, replace_mobject_with_target_in_scene=True) for t,e in zip(transmitted_message, encoded_message)])
+        self.play(*[a.animate.set_color(encoding_box.color) for a in s_t_arrows])
+
         self.wait(1)
         received_message = VGroup(*[Tex(str(x)).scale(0.6) for x in range(0,8)]).arrange(DOWN)
+        received_message = received_message.move_to(combine_positions(receiver.get_center(), received_message.get_center(), [1,0,0]))
 
         noise_arrows = []
         for i in range(0, len(received_message), 2):
             src = encoded_message[i//2]
             target1 = received_message[i]
             target2 = received_message[i+1]
-            a1 = Line(src.get_right(), target1.get_left())
-            a2 = Line(src.get_right(), target2.get_left()) 
+            a1 = Line(src.get_right(), target1.get_left(), color=GREEN)
+            a2 = Line(src.get_right(), target2.get_left(), color=RED) 
             noise_arrows.extend([a1,a2])
             self.play(Create(a1), Create(a2), Create(target2), Create(target1))
 
         decoded_message = VGroup(*[Tex(str(x)).scale(0.6) for x in range(0,4)]).arrange(DOWN).shift(RIGHT)
+        self.play(FadeIn(decoding_box))
+        decoded_message = decoded_message.move_to(combine_positions(destination.get_center(), decoded_message.get_center(), [1,0,0]))
         decoding_arrows = []
         for i in range(0, len(received_message), 2):
             src1 = received_message[i]
             src2 = received_message[i+1]
             target = decoded_message[i//2]
-            a1 = Line(src1.get_right(), target.get_left())
-            a2 = Line(src2.get_right(), target.get_left()) 
+            a1 = Line(src1.get_right(), target.get_left(), color=decoding_box.color)
+            a2 = Line(src2.get_right(), target.get_left(), color=decoding_box.color) 
             decoding_arrows.extend([a1,a2])
             self.play(Create(a1), Create(a2), Create(target))
 
         self.wait(1)
-        self.play(Create(communication_system.shift(3*UP)))
-        self.play(FadeOut(*decoding_arrows, *noise_arrows, *encoded_lines, *arrows))
+        self.play(FadeOut(*decoding_arrows, *noise_arrows, *s_t_arrows))
         self.wait(1)
 
         for grp in [source_message, encoded_message, received_message, decoded_message]:
