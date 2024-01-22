@@ -1120,14 +1120,59 @@ class NoisyChannelTheorem2(Scene):
             self.play(Transform(decoder_cpy, r_d_arrows[i], replace_mobject_with_target_in_scene=True), Create(decoded_message[i]))
 
         self.wait(1)
-        self.play(FadeOut(*decoding_arrows, *noise_arrows, r_d_arrows))
+        self.play(FadeOut(*decoding_arrows, *noise_arrows))
         self.wait(1)
 
-        for grp in [source_message, encoded_message, noisy_message, decoded_message, recieved_message]:
+        for grp in [source_message, encoded_message, noisy_message, recieved_message, decoded_message]:
             for i, src in enumerate(grp):
                 binary_text = Tex(to_binary(int(src.get_tex_string()), 3)).scale(0.6).move_to(src)
                 self.play(Transform(src, binary_text, run_time=0.1, replace_mobject_with_target_in_scene=True))
                 grp[i] = binary_text
         self.wait(1)
 
+        def diff(a, b): return sum([0 if a[i]==b[i] else 1 for i in range(len(a))])
+        src = encoded_message[0]
+        colors = [GREEN, RED_C, RED_B, RED_A]
+        transmitting_lines = []
+        for r in noisy_message:
+            transmitting_lines.append(Line(src.get_right(), r.get_left(), buff=0.25, color=colors[diff(src.get_tex_string(), r.get_tex_string())]))    
+        self.play(*[Create(t) for t in transmitting_lines])
         self.wait(1)
+        
+        src = recieved_message[0]
+        decoding_lines = []
+        for r in noisy_message:
+            decoding_lines.append(Line(r.get_right(), src.get_left(), buff=0.25, color=colors[diff(src.get_tex_string(), r.get_tex_string())]))    
+        self.play(*[Create(d) for d in decoding_lines])
+        self.wait(1) 
+
+        self.play(*[FadeOut(l) for l in transmitting_lines+decoding_lines if l.color == RED_B or l.color == RED_A])
+        self.wait(1) 
+
+        src = recieved_message[3]
+        new_code = Tex("111").scale(0.6).move_to(src)
+        self.play(Transform(src, new_code, replace_mobject_with_target_in_scene=True)) 
+        recieved_message[3] = new_code
+
+        src = encoded_message[3]
+        new_code = Tex("111").scale(0.6).move_to(src)
+        self.play(Transform(src, new_code, replace_mobject_with_target_in_scene=True)) 
+        encoded_message[3] = new_code
+        src = encoded_message[3]
+
+        transmitting_lines2 = []
+        for r in noisy_message:
+            transmitting_lines2.append(Line(src.get_right(), r.get_left(), buff=0.25, color=colors[diff(src.get_tex_string(), r.get_tex_string())]))    
+        self.play(*[Create(t) for t in transmitting_lines2])
+        self.wait(1)
+        
+        src = recieved_message[3]
+        decoding_lines2 = []
+        for r in noisy_message:
+            decoding_lines2.append(Line(r.get_right(), src.get_left(), buff=0.25, color=colors[diff(src.get_tex_string(), r.get_tex_string())]))    
+        self.play(*[Create(d) for d in decoding_lines2])
+        self.wait(1)
+
+        self.play(*[FadeOut(l) for l in transmitting_lines2+decoding_lines2 if l.color == RED_B or l.color == RED_A])
+        self.wait(1)
+
