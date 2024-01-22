@@ -1123,11 +1123,13 @@ class NoisyChannelTheorem2(Scene):
         self.play(FadeOut(*decoding_arrows, *noise_arrows))
         self.wait(1)
 
+        animations = []
         for grp in [source_message, encoded_message, noisy_message, recieved_message, decoded_message]:
             for i, src in enumerate(grp):
                 binary_text = Tex(to_binary(int(src.get_tex_string()), 3)).scale(0.6).move_to(src)
-                self.play(Transform(src, binary_text, run_time=0.1, replace_mobject_with_target_in_scene=True))
+                animations.append(Transform(src, binary_text, replace_mobject_with_target_in_scene=True))
                 grp[i] = binary_text
+        self.play(*animations)
         self.wait(1)
 
         def diff(a, b): return sum([0 if a[i]==b[i] else 1 for i in range(len(a))])
