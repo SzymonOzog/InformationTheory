@@ -1178,3 +1178,138 @@ class NoisyChannelTheorem2(Scene):
         self.play(*[FadeOut(l) for l in transmitting_lines2+decoding_lines2 if l.color == RED_B or l.color == RED_A])
         self.wait(1)
 
+def num_binary_ones(length, num_ones):
+    return int(math.factorial(length) / (math.factorial(num_ones) * math.factorial(length - num_ones)))
+
+def possible_outcomes(length, flip_prob):
+    probs, counts = [],[]
+    for i in range(length + 1):
+        counts.append(num_binary_ones(length, i))
+        probs.append(pow(flip_prob, i) * pow(1-flip_prob, length-i))
+    return counts, probs
+
+class NoisyChannelTheorem3(Scene):
+    def construct(self):
+        flip_prob=0.1
+        rel=0.95
+        flip_prob_text = Tex(f"$p = {flip_prob}$").shift(UP+5*LEFT)
+        stay_prob_text = Tex(f"$q = {1-flip_prob}$").shift(5*LEFT)
+        message_length = Tex("Message length = 3").shift(DOWN+5*LEFT)
+        desired_reliability = Tex(f"Desired reliability= {int(rel*100)}\%").shift(2*DOWN+4.5*LEFT)
+        message = Tex("$000$").shift(2*LEFT)
+        digits = create_binary_digits(3)
+        digits.sort(key=lambda x: x.count("1"))
+        outcomes = VGroup(*[Tex(str(x)) for x in digits]).arrange(DOWN).shift(LEFT)
+
+        self.play(Create(flip_prob_text), Create(stay_prob_text), Create(message_length), Create(message), Create(outcomes), Create(desired_reliability))  
+        self.wait(1)
+        counts, probs = possible_outcomes(3, flip_prob)        
+        final_probs = [ p for c,p in zip (counts, probs) for i in range(c)]
+        individual_probs = VGroup() 
+        for i in range(8):
+            components = ["q" if d == '0' else "p" for d in digits[i]]
+            x =Tex("$" + "*".join(components) + "$").next_to(outcomes[i]) 
+            individual_probs.add(x)
+            y = Tex(f"${final_probs[i]:.4f}$").next_to(outcomes[i])
+            self.play(Create(x))
+            self.play(Transform(x, y))
+
+        current_rel = 0 
+        rel_text = Tex(f"Reliability = {int(current_rel*100)}\%").shift(4*RIGHT)
+        for i in range(8):
+            current_rel+=final_probs[i]
+            self.play(outcomes[i].animate.set_color(GREEN),
+                      individual_probs[i].animate.set_color(GREEN))
+            self.play(Transform(rel_text, Tex(f"Reliability = {int(current_rel*100)}\%").move_to(rel_text)))
+            if(current_rel>=rel):
+                break
+        used_messages=(i+1)/8
+        messages_left = 1-used_messages
+
+        used_messages_text = Tex(f"Used messages = {int(used_messages*100)}\%").next_to(rel_text, DOWN)
+        messages_left_text = Tex(f"Messages left = {int(messages_left*100)}\%").next_to(used_messages_text, DOWN)
+        self.play(Create(used_messages_text), Create(messages_left_text))
+
+        self.wait(1)
+
+        counts, probs = possible_outcomes(4, flip_prob)        
+        final_probs = [ p for c,p in zip (counts, probs) for i in range(c)]
+
+        new_message = Tex("$0000$").shift(2*LEFT)
+        digits = create_binary_digits(4)
+        digits.sort(key=lambda x: x.count("1"))
+        new_outcomes = VGroup(*[Tex(str(x)) for x in digits]).scale(0.5).arrange(DOWN).shift(LEFT)
+        new_individual_probs = VGroup(*[Tex(f"${final_probs[i]:.4f}$").scale(0.5).next_to(new_outcomes[i]) for i in range(16)])
+        self.play(Transform(message_length, Tex("Message length = 4").move_to(message_length)))
+        self.play(Transform(message, new_message))
+        self.play(Transform(outcomes, new_outcomes), Transform(individual_probs, new_individual_probs))
+        self.wait(1)
+            
+        current_rel = 0 
+        for i in range(16):
+            current_rel+=final_probs[i]
+            self.play(outcomes[i].animate.set_color(GREEN),
+                      individual_probs[i].animate.set_color(GREEN))
+            self.play(Transform(rel_text, Tex(f"Reliability = {int(current_rel*100)}\%").move_to(rel_text)))
+            if(current_rel>=rel):
+                break
+
+        used_messages=(i+1)/16
+        messages_left = 1-used_messages
+
+        self.play(Transform(used_messages_text, Tex(f"Used messages = {int(used_messages*100)}\%").move_to(used_messages_text)),
+                  Transform(messages_left_text, Tex(f"Messages left = {int(messages_left*100)}\%").move_to(messages_left_text)))
+
+
+        used_messages_percents = []
+        values = []
+        bar_names= []
+        for i in [3,4,10,20,32,64]:
+            values.append(i)
+            counts, probs = possible_outcomes(i,flip_prob)
+            current_rel = 0
+            j=0
+            for c,p in zip(counts, probs):
+                if current_rel + c*p >=rel:
+                    j = j + math.ceil((rel-current_rel)/p)
+                    break
+                else:
+                    current_rel+=c*p
+                    j+=c
+            used_messages_percents.append(((j) * 100)/pow(2,i))
+            bar_names.append(f"Used {used_messages_percents[-1]} \%, possible = {math.floor(100/used_messages_percents[-1])}")
+
+        print(used_messages_percents, values, bar_names)
+        chart = BarChart(
+            values = used_messages_percents,
+            y_range=[0, 100, 10],
+            y_length=5,
+            bar_names = [str(x) for x in values]
+        ).shift(3*RIGHT)
+
+        self.play(Transform(VGroup(message, outcomes, individual_probs, message_length, rel_text, used_messages_text, messages_left_text),
+                             chart, replace_mobject_with_target_in_scene=True))
+        self.wait(1)
+
+        rel=0.9999
+        used_messages_percents = []
+        values = []
+        bar_names= []
+        for i in [3,4,10,20,32,64]:
+            values.append(i)
+            counts, probs = possible_outcomes(i,flip_prob)
+            current_rel = 0
+            j=0
+            for c,p in zip(counts, probs):
+                if current_rel + c*p >=rel:
+                    j = j + math.ceil((rel-current_rel)/p)
+                    break
+                else:
+                    current_rel+=c*p
+                    j+=c
+            used_messages_percents.append(((j) * 100)/pow(2,i))
+            bar_names.append(f"Used {used_messages_percents[-1]} \%, possible = {math.floor(100/used_messages_percents[-1])}")
+        print(used_messages_percents, values, bar_names)
+        self.play(Transform(desired_reliability, Tex(f"Desired reliability = {rel*100:0.4f}\%").move_to(desired_reliability)))
+        self.play(chart.animate.change_bar_values(used_messages_percents))
+        self.wait(1)
