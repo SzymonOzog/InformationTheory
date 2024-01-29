@@ -1192,17 +1192,18 @@ class NoisyChannelTheorem3(Scene):
     def construct(self):
         flip_prob=0.1
         rel=0.95
-        flip_prob_text = Tex(f"$p = {flip_prob}$").shift(UP+5*LEFT)
-        stay_prob_text = Tex(f"$q = {1-flip_prob}$").shift(5*LEFT)
-        message_length = Tex("Message length = 3").shift(DOWN+5*LEFT)
-        desired_reliability = Tex(f"Desired reliability= {int(rel*100)}\%").shift(2*DOWN+4.5*LEFT)
-        message = Tex("$000$").shift(2*LEFT)
+        flip_prob_text = Tex(f"$p = {flip_prob}$").shift(3*UP+6*LEFT)
+        stay_prob_text = Tex(f"$q = {1-flip_prob}$").next_to(flip_prob_text)
+        message_length = Tex("Message length = 3").next_to(stay_prob_text)
+        desired_reliability = Tex(f"Desired reliability= {int(rel*100)}\%").next_to(message_length)
+        message = Tex("$000$").shift(3*LEFT)
         digits = create_binary_digits(3)
         digits.sort(key=lambda x: x.count("1"))
-        outcomes = VGroup(*[Tex(str(x)) for x in digits]).arrange(DOWN).shift(LEFT)
+        outcomes = VGroup(*[Tex(str(x)) for x in digits]).arrange(DOWN).shift(4*LEFT)
 
-        self.play(Create(flip_prob_text), Create(stay_prob_text), Create(message_length), Create(message), Create(outcomes), Create(desired_reliability))  
+        self.play(Create(flip_prob_text), Create(stay_prob_text), Create(message_length), Create(message), Create(desired_reliability))  
         self.wait(1)
+        self.play(Transform(message, outcomes, replace_mobject_with_target_in_scene=True))
         counts, probs = possible_outcomes(3, flip_prob)        
         final_probs = [ p for c,p in zip (counts, probs) for i in range(c)]
         individual_probs = VGroup() 
@@ -1215,7 +1216,7 @@ class NoisyChannelTheorem3(Scene):
             self.play(Transform(x, y))
 
         current_rel = 0 
-        rel_text = Tex(f"Reliability = {int(current_rel*100)}\%").shift(4*RIGHT)
+        rel_text = Tex(f"Reliability = {int(current_rel*100)}\%").shift(UP+0.5*DOWN)
         for i in range(8):
             current_rel+=final_probs[i]
             self.play(outcomes[i].animate.set_color(GREEN),
@@ -1223,25 +1224,35 @@ class NoisyChannelTheorem3(Scene):
             self.play(Transform(rel_text, Tex(f"Reliability = {int(current_rel*100)}\%").move_to(rel_text)))
             if(current_rel>=rel):
                 break
-        used_messages=(i+1)/8
-        messages_left = 1-used_messages
 
-        used_messages_text = Tex(f"Used messages = {int(used_messages*100)}\%").next_to(rel_text, DOWN)
-        messages_left_text = Tex(f"Messages left = {int(messages_left*100)}\%").next_to(used_messages_text, DOWN)
-        self.play(Create(used_messages_text), Create(messages_left_text))
+        used_messages=(i+1)
 
+        used_messages_text = Tex(f"Used messages = {used_messages}").next_to(rel_text, DOWN, aligned_edge=LEFT)
+        total_messages = Tex(f"Total messages = 8").next_to(used_messages_text, DOWN, aligned_edge=LEFT)
+        self.play(Create(used_messages_text), Create(total_messages))
+
+        reliably_encoded = Tex("Reliably encoded ", "messages = ").next_to(total_messages, DOWN, aligned_edge=LEFT)
+        calculated_total=Tex("Reliably encoded ", "messages = ", f"$\\frac{{{8}}}{{{used_messages}}}$").move_to(reliably_encoded, aligned_edge=LEFT)
+        self.play(Transform(VGroup(reliably_encoded, used_messages_text.copy(), total_messages.copy()), calculated_total,
+                            replace_mobject_with_target_in_scene=True))
+        reliably_encoded = calculated_total
+        self.play(Transform(reliably_encoded,Tex("Reliably encoded ", "messages = ", f"${8/used_messages}$").move_to(reliably_encoded, LEFT)))
+        self.play(Transform(reliably_encoded,Tex("Reliably encoded ", "bits = ", "$\\log_2($", f"${8/used_messages}$",")").move_to(reliably_encoded, LEFT)))
+        self.play(Transform(reliably_encoded,Tex("Reliably encoded ", "bits = ", "$\\log_2($", f"${8/used_messages}$",")").move_to(reliably_encoded, LEFT)))
+        self.play(Transform(reliably_encoded,Tex("Reliably encoded ", "bits = ", "1").move_to(reliably_encoded, LEFT)))
+        reliably_encoded_percent =Tex("Reliably encoded ", "\\% bits = ", f"$100\\% \\cdot \\frac{{\\log_2({8/used_messages})}}{{3}}$").next_to(reliably_encoded, DOWN, aligned_edge=LEFT) 
+        self.play(Create(reliably_encoded_percent))
+        self.play(Transform(reliably_encoded_percent,Tex("Reliably encoded ", "\\% bits = ", "$33.(3)\\%$").move_to(reliably_encoded_percent, aligned_edge=LEFT)))
         self.wait(1)
 
         counts, probs = possible_outcomes(4, flip_prob)        
         final_probs = [ p for c,p in zip (counts, probs) for i in range(c)]
 
-        new_message = Tex("$0000$").shift(2*LEFT)
         digits = create_binary_digits(4)
         digits.sort(key=lambda x: x.count("1"))
-        new_outcomes = VGroup(*[Tex(str(x)) for x in digits]).scale(0.5).arrange(DOWN).shift(LEFT)
+        new_outcomes = VGroup(*[Tex(str(x)) for x in digits]).scale(0.5).arrange(DOWN, 0.15).shift(4*LEFT)
         new_individual_probs = VGroup(*[Tex(f"${final_probs[i]:.4f}$").scale(0.5).next_to(new_outcomes[i]) for i in range(16)])
         self.play(Transform(message_length, Tex("Message length = 4").move_to(message_length)))
-        self.play(Transform(message, new_message))
         self.play(Transform(outcomes, new_outcomes), Transform(individual_probs, new_individual_probs))
         self.wait(1)
             
@@ -1254,62 +1265,69 @@ class NoisyChannelTheorem3(Scene):
             if(current_rel>=rel):
                 break
 
-        used_messages=(i+1)/16
-        messages_left = 1-used_messages
+        used_messages=(i+1)
+        self.play(Transform(used_messages_text, Tex(f"Used messages = {used_messages}\%").move_to(used_messages_text, aligned_edge=LEFT)),
+                  Transform(total_messages, Tex(f"Total messages = 16").move_to(total_messages, aligned_edge=LEFT)),
+                  Transform(reliably_encoded, Tex("Reliably encoded ", "bits = ", f"${math.log2(16/used_messages):.2f}$").move_to(reliably_encoded, aligned_edge=LEFT)),
+                  Transform(reliably_encoded_percent, Tex("Reliably encoded ", "\\% bits = ", f"${math.log2(16/used_messages)*100/4:.2f}\\%$").move_to(reliably_encoded_percent, aligned_edge=LEFT)))
+        self.wait(1)
 
-        self.play(Transform(used_messages_text, Tex(f"Used messages = {int(used_messages*100)}\%").move_to(used_messages_text)),
-                  Transform(messages_left_text, Tex(f"Messages left = {int(messages_left*100)}\%").move_to(messages_left_text)))
-
-
-        used_messages_percents = []
-        values = []
-        bar_names= []
+        bits_used = []
+        bits_encoded=[]
+        percent_bits_encoded=[]
         for i in [3,4,10,20,32,64]:
-            values.append(i)
+            bits_used.append(i)
             counts, probs = possible_outcomes(i,flip_prob)
             current_rel = 0
-            j=0
+            used_messages=0
             for c,p in zip(counts, probs):
                 if current_rel + c*p >=rel:
-                    j = j + math.ceil((rel-current_rel)/p)
+                    used_messages = used_messages + math.ceil((rel-current_rel)/p)
                     break
                 else:
                     current_rel+=c*p
-                    j+=c
-            used_messages_percents.append(((j) * 100)/pow(2,i))
-            bar_names.append(f"Used {used_messages_percents[-1]} \%, possible = {math.floor(100/used_messages_percents[-1])}")
+                    used_messages+=c
+            bits_encoded.append(math.log2(2**i/used_messages))
+            percent_bits_encoded.append(round(bits_encoded[-1]*100/i, 2))
 
-        print(used_messages_percents, values, bar_names)
+            print(f"possible bits % = {math.log2(2**i/used_messages)*100/i:.2f} possible bits ={math.log2(2**i/used_messages)}")
+
         chart = BarChart(
-            values = used_messages_percents,
+            values = percent_bits_encoded,
             y_range=[0, 100, 10],
             y_length=5,
-            bar_names = [str(x) for x in values]
+            bar_names = [str(x) for x in bits_used]
         ).shift(3*RIGHT)
+        c_bar_labels=chart.get_bar_labels()
 
-        self.play(Transform(VGroup(message, outcomes, individual_probs, message_length, rel_text, used_messages_text, messages_left_text),
+        self.play(Transform(VGroup(message, outcomes, individual_probs, message_length, rel_text, used_messages_text, total_messages, reliably_encoded, reliably_encoded_percent),
                              chart, replace_mobject_with_target_in_scene=True))
+        self.play(FadeIn(c_bar_labels))
         self.wait(1)
 
         rel=0.9999
-        used_messages_percents = []
-        values = []
-        bar_names= []
+        bits_used = []
+        bits_encoded=[]
+        percent_bits_encoded=[]
         for i in [3,4,10,20,32,64]:
-            values.append(i)
+            bits_used.append(i)
             counts, probs = possible_outcomes(i,flip_prob)
             current_rel = 0
-            j=0
+            used_messages=0
             for c,p in zip(counts, probs):
                 if current_rel + c*p >=rel:
-                    j = j + math.ceil((rel-current_rel)/p)
+                    used_messages = used_messages + math.ceil((rel-current_rel)/p)
                     break
                 else:
                     current_rel+=c*p
-                    j+=c
-            used_messages_percents.append(((j) * 100)/pow(2,i))
-            bar_names.append(f"Used {used_messages_percents[-1]} \%, possible = {math.floor(100/used_messages_percents[-1])}")
-        print(used_messages_percents, values, bar_names)
-        self.play(Transform(desired_reliability, Tex(f"Desired reliability = {rel*100:0.4f}\%").move_to(desired_reliability)))
-        self.play(chart.animate.change_bar_values(used_messages_percents))
+                    used_messages+=c
+            bits_encoded.append(math.log2(2**i/used_messages))
+            percent_bits_encoded.append(round(bits_encoded[-1]*100/i, 2))
+
+            print(f"possible bits % = {math.floor(math.log2(2**i/used_messages))/i:.2f} possible bits ={math.floor(math.log2(2**i/used_messages))}")
+        self.play(Transform(desired_reliability, Tex(f"Desired reliability = {rel*100:.2f}\%").move_to(desired_reliability)))
+        self.play(FadeOut(c_bar_labels))
+        self.play(chart.animate.change_bar_values(percent_bits_encoded))
+        c_bar_labels = chart.get_bar_labels()
+        self.play(FadeIn(c_bar_labels))
         self.wait(1)
