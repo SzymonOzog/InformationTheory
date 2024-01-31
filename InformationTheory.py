@@ -833,8 +833,12 @@ class NoislessChanelTheorem(MovingCameraScene):
         self.play(Transform(possible_rate, Tex("$R=$", f"${(2/sum(lengths)):.2f}$")))
         self.wait(1)
 
-class NoisyChannelTheorem(Scene):
+class NoisyChannelTheorem(ZoomedScene):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs, zoom_factor=0.05, zoomed_camera_config={'background_opacity': 1, 'default_frame_stroke_width': 0.5}, image_frame_stroke_width=1)
+
     def construct(self):
+
         title = Text("THE FUNDAMENTAL THEOREM \n             FOR A NOISY CHANNEL")
         self.play(Write(title))
         self.wait(1)
@@ -955,7 +959,8 @@ class NoisyChannelTheorem(Scene):
         ax = Axes(x_range=[0,1], y_range=[0,1], x_length=8, y_length=8)
         labels = VGroup(ax.get_x_axis_label(label=Tex("$H(X)$"), edge=DOWN, direction=DOWN).shift(DOWN), ax.get_y_axis_label(label=Tex("$H(X|Y)$"), edge=LEFT, direction=LEFT))
         
-        graph = ax.plot_line_graph(x_values=[0,0.3,1], y_values=[0,0,0.7])
+        EPS = 1e-2
+        graph = ax.plot_line_graph(x_values=[0,0.3,1], y_values=[0,EPS,0.7], add_vertex_dots=False)
 
         c_label = Tex("C").next_to(ax.c2p(0.3,0), DOWN)
 
@@ -963,13 +968,22 @@ class NoisyChannelTheorem(Scene):
         attainable_text = Tex("$attainable$").move_to(attainable.get_center())
         attainable.add(attainable_text)
 
-        non_attainable = Polygon(ax.c2p(0.3,0), ax.c2p(1,0), ax.c2p(1,0.7), fill_color=RED, fill_opacity=0.7,stroke_width=0)
+        non_attainable = Polygon(ax.c2p(0,0), ax.c2p(0.3,EPS), ax.c2p(1,0.7), ax.c2p(1,0), fill_color=RED, fill_opacity=0.7,stroke_width=0)
         non_attainable_text = Tex("$non-attainable$").move_to(non_attainable.get_center_of_mass())
         non_attainable.add(non_attainable_text)
 
-        ar_plot = VGroup(*[ax, labels, graph, c_label, attainable, non_attainable]).scale(0.6).shift(3*LEFT)
+        ar_plot = VGroup(*[attainable, non_attainable, ax, labels, c_label]).scale(0.6).shift(3*LEFT)
         self.play(Create(ar_plot))
         self.wait(1)
+
+        self.zoomed_camera.frame.move_to(ax.c2p(0.3, EPS))
+        self.activate_zooming(True)
+        self.wait(1)
+        l = DashedLine(ax.c2p(0.3,EPS/3.5),ax.c2p(0.3, EPS), stroke_width=0.3, color=BLUE)
+        t = Tex("$\\epsilon$", color=BLUE).scale(0.07).next_to(l, buff=0.01)
+        self.play(Create(l), Create(t))
+        self.wait(1)
+
                 
         
 def combine_positions(a,b,mask): 
