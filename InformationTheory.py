@@ -324,11 +324,16 @@ class Entropy(Scene):
         updated_entropy_formula_2[1].set_color(BLUE)
         updated_entropy_formula_2[2].set_color(RED)
         updated_entropy_formula_2[3].set_color(GREEN)
-        self.play(Transform(entropy_formula_2,updated_entropy_formula_2))
+        self.play(Transform(entropy_formula_2,updated_entropy_formula_2),replace_mobject_with_target_in_scene=True)
+        self.remove(*balls[:7], updated_entropy_formula_2[1])
         self.play(*[Indicate(x, color=BLUE_A) for x in [*balls[:7], updated_entropy_formula_2[1]]])
+        self.add(*balls[:7], updated_entropy_formula_2[1])
+        self.remove(*balls[7:], updated_entropy_formula_2[2])
         self.play(*[Indicate(x, color=RED_A) for x in [*balls[7:], updated_entropy_formula_2[2]]])
+        self.add(*balls[7:], updated_entropy_formula_2[2])
+        self.remove(*new_balls, updated_entropy_formula_2[3])
         self.play(*[Indicate(x, color=GREEN_A) for x in [*new_balls, updated_entropy_formula_2[3]]])
-        
+        self.add(*new_balls, updated_entropy_formula_2[3])
 
         self.wait(1)
         
