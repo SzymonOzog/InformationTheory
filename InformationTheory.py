@@ -334,7 +334,6 @@ class Entropy(Scene):
         self.remove(*new_balls, updated_entropy_formula_2[3])
         self.play(*[Indicate(x, color=GREEN_A) for x in [*new_balls, updated_entropy_formula_2[3]]])
         self.add(*new_balls, updated_entropy_formula_2[3])
-
         self.wait(1)
         
 
