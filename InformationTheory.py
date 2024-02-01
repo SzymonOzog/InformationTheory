@@ -1349,3 +1349,97 @@ class NoisyChannelTheorem3(Scene):
         c_bar_labels = chart.get_bar_labels()
         self.play(FadeIn(c_bar_labels))
         self.wait(1)
+
+class NoisyChannelTheorem4(Scene):
+    def construct(self):
+        communication_system = VGroup() 
+        source = Square()
+        source.add(Text("Information\nSource", font_size=20,))
+        source.shift(LEFT*3)
+        communication_system.add(source)
+        
+        transmitter = Square()
+        transmitter.add(Text("Transmitter", font_size=20))
+        s_to_t = Arrow(source.get_right(), transmitter.get_left(), buff=0, max_stroke_width_to_length_ratio=1)
+        communication_system.add(transmitter)
+        communication_system.add(s_to_t)
+
+        group = Group(source, s_to_t, transmitter)
+        group.shift(LEFT*3)
+
+        channel = Square()
+        channel.add(Text("Channel", font_size=20))
+        communication_system.add(Arrow(transmitter.get_right(), channel.get_left(), buff=0, max_stroke_width_to_length_ratio=1))
+        communication_system.add(channel)
+
+        receiver = Square()
+        receiver.add(Text("Receiver", font_size=20))
+        receiver.shift(RIGHT*3)
+        communication_system.add(Arrow(channel.get_right(), receiver.get_left(), buff=0, max_stroke_width_to_length_ratio=1))
+        communication_system.add(receiver)
+        
+        destination = Square()
+        destination.add(Text("Destination", font_size=20))
+        destination.shift(RIGHT*6)
+        communication_system.add(Arrow(receiver.get_right(), destination.get_left(), buff=0, max_stroke_width_to_length_ratio=1))
+        communication_system.add(destination)
+
+        noise_text = Text("Noise", font_size=20, color=RED)
+        noise=SurroundingRectangle(noise_text, color=RED)
+        noise.add(noise_text)
+        noise.next_to(channel.submobjects[0], DOWN)
+        communication_system.add(noise)
+
+        encoding = Text("Encoding", font_size=20, color=BLUE).next_to(transmitter.submobjects[0], DOWN)
+        encoding_box = SurroundingRectangle(encoding, color=BLUE)
+        encoding_box.add(encoding)
+
+        decoding = Text("Decoding", font_size=20, color=BLUE_D).next_to(receiver.submobjects[0], DOWN)
+        decoding_box = SurroundingRectangle(decoding, color=BLUE_D)
+        decoding_box.add(decoding)
+        self.play(Create(communication_system), Create(decoding_box), Create(encoding_box))
+        self.wait(1)
+
+        self.play(communication_system.animate.shift(3*UP),
+                  encoding_box.animate.shift(3*UP),
+                  decoding_box.animate.shift(3*UP))
+
+        radius=DEFAULT_SMALL_DOT_RADIUS
+        buffer=0.15
+        three_dots = VGroup(*[Dot(radius=radius*2/3, color=GREY) for _ in range(3)]).arrange(DOWN,buff=0.1)
+
+        source_message = VGroup(*[Dot(radius=radius) if i != 8 else three_dots.copy() for i in range(16)]).arrange(DOWN, buff=buffer)
+        source_message.move_to(combine_positions(source.get_center(), source_message.get_center(), [1,0,0]))
+        self.play(Create(source_message))
+        self.wait(1)
+
+        transmitted_message = source_message.copy()
+        transmitted_message.move_to(combine_positions(transmitter.get_center(), transmitted_message.get_center(), [1,0,0]))
+
+        s_t_arrows = VGroup(*[Line(s.get_right(), t.get_left(), buff=0.25) for s,t in zip(source_message, transmitted_message)])
+        anims=[]
+        for i in range(len(s_t_arrows)):
+            anims.append(Create(transmitted_message[i]))
+            if i == 8:
+                continue
+            anims.append(Create(s_t_arrows[i]))
+        self.play(LaggedStart(*anims))
+        self.wait(1)
+
+        decoded_message = source_message.copy()
+        decoded_message.move_to(combine_positions(destination.get_center(), decoded_message.get_center(), [1,0,0]))
+
+        received_message = source_message.copy()
+        received_message.move_to(combine_positions(receiver.get_center(), received_message.get_center(), [1,0,0]))
+        r_d_arrows = VGroup(*[Line(r.get_right(), d.get_left(), buff=0.25) for r,d in zip(received_message, decoded_message) if isinstance(d,Dot)])
+
+        self.play(Transform(source_message.copy(), decoded_message, replace_mobject_with_target_in_scene=True),
+                  Transform(transmitted_message.copy(), received_message, replace_mobject_with_target_in_scene=True),
+                  Transform(s_t_arrows.copy(), r_d_arrows, replace_mobject_with_target_in_scene=True))
+
+        self.wait(1)
+
+        channel_messages = source_message.copy() 
+        channel_messages.move_to(combine_positions(channel.get_center(), channel_messages.get_center(), [1,0,0]))
+        self.play(Transform(channel.copy(), channel_messages,replace_mobject_with_target_in_scene=True))
+        self.wait(1)
