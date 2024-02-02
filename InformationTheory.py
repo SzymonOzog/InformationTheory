@@ -1408,7 +1408,7 @@ class NoisyChannelTheorem4(Scene):
         buffer=0.15
         three_dots = VGroup(*[Dot(radius=radius*2/3, color=GREY) for _ in range(3)]).arrange(DOWN,buff=0.1)
 
-        source_message = VGroup(*[Dot(radius=radius) if i != 8 else three_dots.copy() for i in range(16)]).arrange(DOWN, buff=buffer)
+        source_message = VGroup(*[Dot(radius=radius) if i != 8 else three_dots.copy() for i in range(16)]).arrange(DOWN, buff=buffer).shift(DOWN)
         source_message.move_to(combine_positions(source.get_center(), source_message.get_center(), [1,0,0]))
         self.play(Create(source_message))
         self.wait(1)
@@ -1442,4 +1442,46 @@ class NoisyChannelTheorem4(Scene):
         channel_messages = source_message.copy() 
         channel_messages.move_to(combine_positions(channel.get_center(), channel_messages.get_center(), [1,0,0]))
         self.play(Transform(channel.copy(), channel_messages,replace_mobject_with_target_in_scene=True))
+        self.wait(1)
+
+        def create_noise_arrows(idx, down, src_messages):
+            src = src_messages[idx]
+            arrows = []
+            for i in range(4):
+                if down:
+                    dst = channel_messages[idx+i] 
+                else:
+                    dst = channel_messages[idx-i]
+                arrows.append(Line(src.get_center(), dst.get_center()))   
+                if idx+i == 8:
+                    break
+            return arrows
+        
+        for i in range(7):
+            noise_arrows = create_noise_arrows(i,True,transmitted_message)
+            self.play(*[Create(a, run_time=0.5) for a in noise_arrows])
+            self.play(*[Uncreate(a, run_time=0.5) for a in noise_arrows])
+
+
+        for i in range(7):
+            noise_arrows = create_noise_arrows(i,True, received_message)
+            self.play(*[Create(a, run_time=0.5) for a in noise_arrows])
+            self.play(*[Uncreate(a, run_time=0.5) for a in noise_arrows])
+
+        num_messages = Tex("$H(y)$").next_to(received_message, DOWN)
+        self.play(Create(num_messages))
+        self.play(Transform(num_messages, Tex("$2^{H(y)}$").move_to(num_messages)))
+
+        noise_arrows = create_noise_arrows(0,True, transmitted_message)
+        self.play(*[Create(a, run_time=0.5) for a in noise_arrows])
+         
+        noise_arrows2 = create_noise_arrows(0,True, received_message)
+        self.play(*[Create(a, run_time=0.5) for a in noise_arrows2])
+
+        num_effects = Tex("$2^{H(y|x)}$").next_to(noise_arrows[-1], DOWN)
+        self.play(Create(num_effects))
+        self.wait(1)
+
+        num_causes = Tex("$2^{H(x|y)}$").next_to(noise_arrows2[-1], DOWN)
+        self.play(Create(num_causes))
         self.wait(1)
