@@ -1404,84 +1404,152 @@ class NoisyChannelTheorem4(Scene):
                   encoding_box.animate.shift(3*UP),
                   decoding_box.animate.shift(3*UP))
 
+        bsc = BSC()
+        bsc.full_channel.scale(0.7).shift(3*UP)        
+        bsc.full_channel.remove(bsc.q_label, bsc.one_minus_q_label, bsc.one_minus_p_label0, bsc.p_label0, bsc.one_minus_p_label1, bsc.p_label1)
+ 
+        source_arrows = VGroup(Arrow(source.get_right(), bsc.input_bit_0.get_left(), buff=0.25, max_stroke_width_to_length_ratio=2, max_tip_length_to_length_ratio=0.1),
+                               Arrow(source.get_right(), bsc.input_bit_1.get_left(), buff=0.25, max_stroke_width_to_length_ratio=2, max_tip_length_to_length_ratio=0.1))
+        destination_arrows = VGroup(Arrow(bsc.output_bit_0.get_right(), destination.get_left(), buff=0.25, max_stroke_width_to_length_ratio=2, max_tip_length_to_length_ratio=0.1),
+                                    Arrow(bsc.output_bit_1.get_right(), destination.get_left(), buff=0.25, max_stroke_width_to_length_ratio=2, max_tip_length_to_length_ratio=0.1))
+
+        communication_system.add(encoding_box, decoding_box)
+        self.wait(1)
+        self.play(Transform(communication_system, VGroup(bsc.full_channel, source_arrows, destination_arrows, source.copy(), destination.copy()).shift(LEFT).scale(0.5)))
+        self.wait(1)
+        
         radius=DEFAULT_SMALL_DOT_RADIUS
         buffer=0.15
         three_dots = VGroup(*[Dot(radius=radius*2/3, color=GREY) for _ in range(3)]).arrange(DOWN,buff=0.1)
 
-        source_message = VGroup(*[Dot(radius=radius) if i != 8 else three_dots.copy() for i in range(16)]).arrange(DOWN, buff=buffer).shift(DOWN)
-        source_message.move_to(combine_positions(source.get_center(), source_message.get_center(), [1,0,0]))
-        self.play(Create(source_message))
+        def create_digits(l):
+            binary_digits = create_binary_digits(l)
+            binary_digits.sort(key=lambda x: x.count("1"))
+            tex_digits = [Tex(x).scale(0.7) for x in binary_digits]
+            if l < 4:
+                return VGroup(*tex_digits).arrange(DOWN, center=False, buff=buffer)
+            return VGroup(*(tex_digits[:6] + [three_dots] + tex_digits[-6:])).arrange(DOWN, center=False, buff=buffer)
+
+        self.play(ShowPassingFlash(source_arrows.copy().set_color(BLUE), time_width=0.7))
+        x_outcomes = create_digits(1).shift(1.5*UP)
+        x_outcomes.move_to(combine_positions(bsc.input_0_text.get_center(), x_outcomes.get_center(), [1, 0, 0]))
+        self.play(Transform(VGroup(bsc.input_0_text.copy(), bsc.input_1_text.copy()), x_outcomes, replace_mobject_with_target_in_scene=True))
+
+        self.play(ShowPassingFlash(bsc.arrows.copy().set_color(BLUE), time_width=0.7))
+        y_outcomes = x_outcomes.copy()
+        y_outcomes.move_to(combine_positions(bsc.output_1_text.get_center(), y_outcomes.get_center(), [1, 0, 0]))
+        self.play(Transform(VGroup(bsc.output_0_text.copy(), bsc.output_1_text.copy()), y_outcomes, replace_mobject_with_target_in_scene=True))
+        self.wait(1)
+        usage = Tex("$T = $", "1").next_to(x_outcomes, LEFT).shift(2*LEFT)
+        self.play(Create(usage))
+
+        for l in range(2, 5):
+            self.play(Transform(usage, Tex("$T = $", f"{l}").move_to(usage)))
+            self.play(ShowPassingFlash(source_arrows.copy().set_color(BLUE), time_width=0.7))
+            dir = x_outcomes.get_edge_center(UP)
+            x_outcomes = VGroup(x_outcomes, bsc.input_0_text.copy(), bsc.input_1_text.copy())
+            self.play(Transform(x_outcomes, create_digits(l).move_to(dir, aligned_edge=UP)))
+            self.play(ShowPassingFlash(bsc.arrows.copy().set_color(BLUE), time_width=0.7))
+            dir = y_outcomes.get_edge_center(UP)
+            y_outcomes = VGroup(y_outcomes, bsc.output_0_text.copy(), bsc.output_1_text.copy())
+            self.play(Transform(y_outcomes, create_digits(l).move_to(dir, aligned_edge=UP)))
         self.wait(1)
 
-        transmitted_message = source_message.copy()
-        transmitted_message.move_to(combine_positions(transmitter.get_center(), transmitted_message.get_center(), [1,0,0]))
+        binary_digits = create_binary_digits(7)
+        binary_digits.sort(key=lambda x: x.count("1"))
+        tex_digits = [Tex(x[:3], "...", x[-3:]).scale(0.7) for x in binary_digits]
+        long_message = VGroup(*(tex_digits[:6] + [three_dots] + tex_digits[-6:])).arrange(DOWN, center=False, buff=buffer)
 
-        s_t_arrows = VGroup(*[Line(s.get_right(), t.get_left(), buff=0.25) for s,t in zip(source_message, transmitted_message)])
-        anims=[]
-        for i in range(len(s_t_arrows)):
-            anims.append(Create(transmitted_message[i]))
-            if i == 8:
-                continue
-            anims.append(Create(s_t_arrows[i]))
-        self.play(LaggedStart(*anims))
+        self.play(Transform(usage, Tex("$T \\to \\infty$").move_to(usage)))
+        self.play(Transform(x_outcomes, long_message.copy().move_to(x_outcomes, aligned_edge=UP)))
+        self.play(Transform(y_outcomes, long_message.copy().move_to(y_outcomes, aligned_edge=UP)))
         self.wait(1)
-
-        decoded_message = source_message.copy()
-        decoded_message.move_to(combine_positions(destination.get_center(), decoded_message.get_center(), [1,0,0]))
-
-        received_message = source_message.copy()
-        received_message.move_to(combine_positions(receiver.get_center(), received_message.get_center(), [1,0,0]))
-        r_d_arrows = VGroup(*[Line(r.get_right(), d.get_left(), buff=0.25) for r,d in zip(received_message, decoded_message) if isinstance(d,Dot)])
-
-        self.play(Transform(source_message.copy(), decoded_message, replace_mobject_with_target_in_scene=True),
-                  Transform(transmitted_message.copy(), received_message, replace_mobject_with_target_in_scene=True),
-                  Transform(s_t_arrows.copy(), r_d_arrows, replace_mobject_with_target_in_scene=True))
-
-        self.wait(1)
-
-        channel_messages = source_message.copy() 
-        channel_messages.move_to(combine_positions(channel.get_center(), channel_messages.get_center(), [1,0,0]))
-        self.play(Transform(channel.copy(), channel_messages,replace_mobject_with_target_in_scene=True))
-        self.wait(1)
-
-        def create_noise_arrows(idx, down, src_messages):
-            src = src_messages[idx]
-            arrows = []
-            for i in range(4):
-                if down:
-                    dst = channel_messages[idx+i] 
-                else:
-                    dst = channel_messages[idx-i]
-                arrows.append(Line(src.get_center(), dst.get_center()))   
-                if idx+i == 8:
-                    break
-            return arrows
         
-        for i in range(7):
-            noise_arrows = create_noise_arrows(i,True,transmitted_message)
-            self.play(*[Create(a, run_time=0.5) for a in noise_arrows])
-            self.play(*[Uncreate(a, run_time=0.5) for a in noise_arrows])
+        dot_anims = []
+        for i in range(len(x_outcomes)):
+            if i != 6:
+                dot_anims.append(Transform(x_outcomes[i], Dot(radius=radius).move_to(x_outcomes[i])))
+                dot_anims.append(Transform(y_outcomes[i], Dot(radius=radius).move_to(y_outcomes[i])))
 
-
-        for i in range(7):
-            noise_arrows = create_noise_arrows(i,True, received_message)
-            self.play(*[Create(a, run_time=0.5) for a in noise_arrows])
-            self.play(*[Uncreate(a, run_time=0.5) for a in noise_arrows])
-
-        num_messages = Tex("$H(y)$").next_to(received_message, DOWN)
-        self.play(Create(num_messages))
-        self.play(Transform(num_messages, Tex("$2^{H(y)}$").move_to(num_messages)))
-
-        noise_arrows = create_noise_arrows(0,True, transmitted_message)
-        self.play(*[Create(a, run_time=0.5) for a in noise_arrows])
-         
-        noise_arrows2 = create_noise_arrows(0,True, received_message)
-        self.play(*[Create(a, run_time=0.5) for a in noise_arrows2])
-
-        num_effects = Tex("$2^{H(y|x)}$").next_to(noise_arrows[-1], DOWN)
-        self.play(Create(num_effects))
+        self.play(LaggedStart(*dot_anims))
         self.wait(1)
 
-        num_causes = Tex("$2^{H(x|y)}$").next_to(noise_arrows2[-1], DOWN)
-        self.play(Create(num_causes))
+        probable_messages = Tex("$2^{T}$").next_to(usage, DOWN)
+        self.play(Transform(usage.copy(), probable_messages, replace_mobject_with_target_in_scene=True))
+
+        all_arrows = VGroup()
+        
+        causes_arrows = VGroup()
+        for i in range(13):
+            causes_arrows.add(Line(x_outcomes[0].get_center(), y_outcomes[i].get_center(), stroke_width=1))
+
+        self.play(LaggedStart(*[Create(c) for c in causes_arrows]))
+        all_arrows.add(causes_arrows)
+        self.wait(1)
+
+        error_free1 = Tex("$2^{R} = $", "$\\frac{}{}$").shift(2*RIGHT)
+        error_free2 = Tex("$2^{R} = $", "$\\frac{output\\ messages}{}$").move_to(error_free1, LEFT)
+        error_free3 = Tex("$2^{R} = $", "$\\frac{output\\ messages}{unique\\ messages}$").move_to(error_free2, LEFT)
+
+        self.play(Create(error_free1))
+        self.wait(1)
+        self.play(Transform(VGroup(error_free1, y_outcomes.copy()), error_free2, replace_mobject_with_target_in_scene=True))
+        self.wait(1)
+        self.play(Transform(VGroup(error_free2, causes_arrows.copy()), error_free3, replace_mobject_with_target_in_scene=True))
+        self.wait(1)
+
+        num_output = probable_messages.copy().next_to(causes_arrows, DOWN)
+        num_noised = probable_messages.copy().next_to(y_outcomes, DOWN)
+        self.play(Transform(causes_arrows.copy(), num_output, replace_mobject_with_target_in_scene=True))
+        self.play(Transform(y_outcomes.copy(), num_noised, replace_mobject_with_target_in_scene=True))
+
+        self.wait(1)
+        self.play(Transform(error_free3, Tex("$2^{R} = $", "$\\frac{2^{T}}{2^{T}}$").move_to(error_free3, LEFT)),
+                    FadeOut(num_output, num_noised))
+        self.wait(1)
+        self.play(Transform(error_free3, Tex("$2^{R} = $", "$\\frac{2^{T}}{2^{T}}$", "$ = 2^0$").move_to(error_free3, LEFT)))
+        self.wait(1)
+        self.play(Transform(error_free3, Tex("$2^{R} = $", "$\\frac{2^{T}}{2^{T}}$", "$ = 2^0$", "$ = 1$").move_to(error_free3, LEFT)))
+        self.wait(1)
+
+
+        uncreation = []
+        for i in range(12, 2, -1):
+            uncreation.append(Uncreate(causes_arrows[i]))
+
+        self.play(LaggedStart(*uncreation))
+
+        for i in range(12, 2, -1):
+            causes_arrows.remove(causes_arrows[i])
+
+        creation = []
+        for i in range(1,13):
+            if i == 6: continue
+            causes_arrows = VGroup()
+            for j in range(3):
+                idx = i+j if i<=6 else i-j
+                causes_arrows.add(Line(x_outcomes[i].get_center(), y_outcomes[idx].get_center(), stroke_width=1))
+                if idx == 6: break
+
+            creation.append(LaggedStart(*[Create(c) for c in causes_arrows]))
+            all_arrows.add(causes_arrows)
+        self.play(LaggedStart(*creation))
+        
+        uncreation = []
+        for i in range(11, 0, -1):
+            if i in [0, 3, 8, 11]: continue
+            uncreation.append(LaggedStart(*[Uncreate(a) for a in all_arrows[i]]))
+        self.play(LaggedStart(*uncreation))
+
+        for i in range(11, 0, -1):
+            if i in [0, 3, 8, 11]: continue
+            all_arrows.remove(all_arrows[i])
+        self.wait(1)
+
+        self.play(Transform(num_output, Tex("$2^{H(Y)T}$").move_to(num_output, LEFT+DOWN)),
+                 Transform(error_free3, Tex("$2^{R} = $", "$\\frac{2^{H(Y)T}}{2^{T}}$").move_to(error_free3, LEFT)))
+        self.play(Transform(num_noised, Tex("$2^{H(Y|X)T}$").move_to(num_noised, LEFT+DOWN)),
+                 Transform(error_free3, Tex("$2^{R} = $", "$\\frac{2^{H(Y)T}}{2^{H(Y|X)T}}$").move_to(error_free3, LEFT)))
+        self.wait(1)
+        self.play(Transform(error_free3, Tex("$2^{R} = $", "$2^{I(X;Y)T}$").move_to(error_free3, LEFT)))
         self.wait(1)
