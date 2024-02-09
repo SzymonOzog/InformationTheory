@@ -1553,3 +1553,37 @@ class NoisyChannelTheorem4(Scene):
         self.wait(1)
         self.play(Transform(error_free3, Tex("$2^{R} = $", "$2^{I(X;Y)T}$").move_to(error_free3, LEFT)))
         self.wait(1)
+
+class Entry:
+    def __init__(self, main_tex, subtexts = []):
+        self.main = Tex(main_tex)
+        self.list = BulletedList(*subtexts)
+
+    def open(self):
+        return Transform(self.main.copy(), self.list.next_to(self.main, DOWN, aligned_edge=LEFT), replace_mobject_with_target_in_scene=True)
+
+    def close(self):
+        return FadeOut(self.list)
+
+class TableOfContents(Scene):
+    def construct(self):
+
+        information_content = Entry("1. Information", ["What is information?", "How do we measure information?"]) 
+        entropy = Entry("2. Entropy", ["Uncertainty", "Surprise", "Information"]) 
+        two_event_entropy = Entry("3. Entropy with multiple events", ["","Mutual information"])
+        communication_system = Entry("4. Communication System", ["General communication system", "Example: Binary Symmetric Channel", "Analysis of a BSC"])
+        noiseless_channel = Entry("5. Noiseless Channel Theorem", ["How much data can we send", "How to encode data efficiently"])
+        noisy_channel = Entry("6. Noisy Channel Theorem", ["How to send messages reliably in presence of noise", "How much data can we send?"])
+
+        entries = [information_content, entropy, two_event_entropy, communication_system, noiseless_channel, noisy_channel]
+        entries[0].main.shift(2*LEFT + 3*UP)
+        for i in range(1, len(entries)):
+            entries[i].main.next_to(entries[i-1].main, DOWN, aligned_edge=LEFT)
+        for e in entries:
+            self.play(Create(e.main))
+            self.wait(1)
+            self.play(e.open())
+            self.wait(1)
+            self.play(e.close())
+            self.wait(1)
+        
