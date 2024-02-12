@@ -1,4 +1,6 @@
 from manim import *
+from manim_voiceover import VoiceoverScene
+from manim_voiceover.services.recorder import RecorderService
 from entropy import *
 from random import random 
 
@@ -1565,8 +1567,9 @@ class Entry:
     def close(self):
         return Unwrite(self.list)
 
-class TableOfContents(Scene):
+class TableOfContents(VoiceoverScene):
     def construct(self):
+        self.set_speech_service(RecorderService())
         header = Tex("Information Theory", font_size=85)
 
         information_content = Entry("1. Information", ["What is information?", "How do we measure information?"]) 
@@ -1582,11 +1585,15 @@ class TableOfContents(Scene):
         for i in range(1, len(entries)):
             entries[i].main.next_to(entries[i-1].main, DOWN, aligned_edge=LEFT)
 
-        self.play(Write(header.next_to(entries[0].main, UP, aligned_edge=LEFT)))
+        with self.voiceover("Header") as trk:
+            self.play(Write(header.next_to(entries[0].main, UP, aligned_edge=LEFT)))
         for e in entries:
-            self.play(Write(e.main))
+
+            with self.voiceover(e.main.tex_string) as trk:
+                self.play(Write(e.main))
             self.wait(1)
-            self.play(e.open())
+            with self.voiceover(e.main.tex_string + "opening") as trk:
+                self.play(e.open())
             self.wait(1)
             self.play(e.close())
             self.wait(1)
