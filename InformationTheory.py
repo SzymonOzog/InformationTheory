@@ -1567,10 +1567,10 @@ class Entry:
     def close(self):
         return Unwrite(self.list)
 
-class TableOfContents(VoiceoverScene):
-    def construct(self):
-        self.set_speech_service(RecorderService())
-        header = Tex("Information Theory", font_size=85)
+
+class TOC:
+    def __init__(self):
+        self.header = Tex("Information Theory", font_size=85)
 
         information_content = Entry("1. Information", ["What is information?", "How do we measure information?"]) 
         entropy = Entry("2. Entropy", ["Uncertainty", "Surprise", "Information"]) 
@@ -1579,16 +1579,20 @@ class TableOfContents(VoiceoverScene):
         noiseless_channel = Entry("5. Noiseless Channel Theorem", ["Capacity", "Efficient encoding"])
         noisy_channel = Entry("6. Noisy Channel Theorem", ["Capacity", "Rate", "Reliable communication"])
 
-        entries = [information_content, entropy, two_event_entropy, communication_system, noiseless_channel, noisy_channel]
-        entries[0].main.shift(2*LEFT + 2*UP)
+        self.entries = [information_content, entropy, two_event_entropy, communication_system, noiseless_channel, noisy_channel]
+        self.entries[0].main.shift(2*LEFT + 2*UP)
 
-        for i in range(1, len(entries)):
-            entries[i].main.next_to(entries[i-1].main, DOWN, aligned_edge=LEFT)
+        for i in range(1, len(self.entries)):
+            self.entries[i].main.next_to(self.entries[i-1].main, DOWN, aligned_edge=LEFT)
+
+class TableOfContents(VoiceoverScene):
+    def construct(self):
+        self.set_speech_service(RecorderService())
+        toc = TOC()
 
         with self.voiceover("Header") as trk:
-            self.play(Write(header.next_to(entries[0].main, UP, aligned_edge=LEFT)))
-        for e in entries:
-
+            self.play(Write(toc.header.next_to(toc.entries[0].main, UP, aligned_edge=LEFT)))
+        for e in toc.entries:
             with self.voiceover(e.main.tex_string) as trk:
                 self.play(Write(e.main))
             self.wait(1)
