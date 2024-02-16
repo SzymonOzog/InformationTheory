@@ -77,46 +77,115 @@ def create_binary_digits(len):
 
 class InformationContent(Scene):
     def construct(self):
-        title = Text("Information\nContent")
-        self.play(Write(title))
+        toc = TOC()
+        self.play(Write(toc.header.next_to(toc.entries[0].main, UP, aligned_edge=LEFT)))
+        self.play(*[Write(e.main) for e in toc.entries])
         self.wait(1)
-        self.play(FadeOut(title))
-        
-        log = Tex("$\log_b N$")
-        self.play(Write(log))
-        self.wait(1)
-        self.play(log.animate.shift(2*RIGHT))
-        
-        binary_digits = [Tex(x) for x in create_binary_digits(2)]
-        
-        for i,b in enumerate(binary_digits):
-            self.play(Write(b))
-            self.play(b.animate.shift(2*LEFT + 2*UP + i*0.5*DOWN))
+        self.play(*[Unwrite(e.main) for e in toc.entries[1:]])
+    
+        log = Tex("$\log_b N$", font_size=85)
+        self.play(Transform(VGroup(toc.entries[0].main, toc.header), log, replace_mobject_with_target_in_scene=True))
+        self.play(Transform(log, Tex("$\log$", "$_b$", "$N$").set_color_by_tex("_b", BLUE).set_color_by_tex("$N$", ORANGE).shift(2*RIGHT)))
 
-        rect = SurroundingRectangle( Group(*binary_digits))
-        self.play(Create(rect))
-        self.play(Transform(log, Tex("$\log$", "$_2$", "$4$", "$=$", "$2$").set_color_by_tex("_2", RED).shift(2*RIGHT)))
-        self.wait(1)
-        self.play(Transform(rect, SurroundingRectangle(Group(*binary_digits[:2]))))
-        self.play(Transform(log, Tex("$\log$", "$_2$", "$2$", "$=$", "$1$").set_color_by_tex("_2", RED).shift(2*RIGHT)))
+        source = Square()
+        source.add(Text("Information\nSource", font_size=20))
+        source.shift(LEFT*3)
         
-        anims = []
-        for i,b in enumerate(create_binary_digits(3)):
-            if len(binary_digits)>i:
-                x = Tex(b).shift(2*LEFT + 2*UP + i*0.5*DOWN)
-                anims.append(Transform(binary_digits[i],x))
-                binary_digits[i] = x
-            else:
-                x = Tex(b).shift(2*LEFT + 2*UP + i*0.5*DOWN)
-                binary_digits.append(x)
-                anims.append(Write(x))
-        anims.append(Transform(rect, SurroundingRectangle(Group(*binary_digits[:2]))))
-        self.play(*anims)
+        bit_0 = Circle(radius=0.5, color=BLUE).next_to(source, RIGHT+UP, aligned_edge=RIGHT+UP)
+        bit_0.add(Tex("0").scale(1.5).move_to(bit_0.get_center()))
+        bit_0.scale(0.5)
+        bit_1 = Circle(radius=0.5, color=BLUE).next_to(source, RIGHT+DOWN, aligned_edge=RIGHT+DOWN)
+        bit_1.add(Tex("1").scale(1.5).move_to(bit_1.get_center()))
+        bit_1.scale(0.5)
 
+        
+        self.play(Create(source), Create(bit_0), Create(bit_1))
+        
+        binary_digits = VGroup(*[Tex(x, color=ORANGE) for x in create_binary_digits(1)]).arrange(DOWN)
+        self.play(Transform(VGroup(bit_0.copy(), bit_1.copy()), binary_digits, replace_mobject_with_target_in_scene=True))
+        self.play(Transform(log, Tex("$\log$", "$_2$", "$2$", "$=$", "$1$").set_color_by_tex("_2", BLUE).set_color_by_tex("$2$", ORANGE).shift(2*RIGHT)))
         self.wait(1)
 
+        binary_digits_2 = VGroup(*[Tex(x, color=ORANGE) for x in create_binary_digits(2)]).arrange(DOWN)
+        self.play(Transform(VGroup(bit_0.copy(), bit_1.copy(), binary_digits), binary_digits_2, replace_mobject_with_target_in_scene=True))
+        self.play(Transform(log, Tex("$\log$", "$_2$", "$4$", "$=$", "$2$").set_color_by_tex("_2", BLUE).set_color_by_tex("$4$", ORANGE).shift(2*RIGHT)))
+        self.wait(1)
 
-class BSC:
+        
+        binary_digits_3 = VGroup(*[Tex(x, color=ORANGE) for x in create_binary_digits(3)]).arrange(DOWN)
+        self.play(Transform(VGroup(bit_0.copy(), bit_1.copy(), binary_digits_2), binary_digits_3, replace_mobject_with_target_in_scene=True))
+        self.play(Transform(log, Tex("$\log$", "$_2$", "$8$", "$=$", "$3$").set_color_by_tex("_2", BLUE).set_color_by_tex("$8$", ORANGE).shift(2*RIGHT)))
+        self.wait(1)
+
+        decimal_digits = VGroup()
+        radius=DEFAULT_SMALL_DOT_RADIUS
+        three_dots = VGroup(*[Dot(radius=radius*2/3, color=WHITE) for _ in range(3)]).arrange(DOWN,buff=0.1)
+        for i in range(10):
+            if i == 3: 
+                decimal_digits.add(three_dots)
+            elif i < 3 or i > 6:
+                dig = Circle(radius=0.5, color=BLUE)
+                dig.add(Tex(str(i)).scale(1.5).move_to(dig.center()))
+                decimal_digits.add(dig)
+        decimal_digits.arrange(DOWN).scale(0.3).next_to(source, RIGHT, aligned_edge=RIGHT)
+        self.play(Transform(VGroup(bit_0, bit_1), decimal_digits, replace_mobject_with_target_in_scene=True))
+        
+        messages = VGroup(*[Tex(str(x), color=ORANGE) for x in range(10)]).arrange(DOWN)
+        self.play(Transform(binary_digits_3, messages, replace_mobject_with_target_in_scene=True))
+        self.play(Transform(log, Tex("$\log$", "$_{10}$", "$10$", "$=$", "$1$").set_color_by_tex("_{10}", BLUE).set_color_by_tex("$10$", ORANGE).shift(2*RIGHT)))
+        self.wait(1)
+        
+        new_messages = VGroup(*[Tex(x, color=ORANGE) for x in ["00", "01", "02", "03"]], three_dots, *[Tex(x, color=ORANGE) for x in ["96", "97", "98", "99"]]).arrange(DOWN)
+        self.play(Transform(VGroup(decimal_digits.copy(), messages), new_messages, replace_mobject_with_target_in_scene=True))
+        self.play(Transform(log, Tex("$\log$", "$_{10}$", "$100$", "$=$", "$2$").set_color_by_tex("_{10}", BLUE).set_color_by_tex("$100$", ORANGE).shift(2*RIGHT)))
+        self.wait(1)
+        
+        hard_drive = Square()
+        hard_drive.add(Text("Hard Drive", font_size=20))
+        byte = VGroup(*[Circle(radius=0.5, fill_color = BLUE, color = BLUE, fill_opacity = 1) for _ in range(8)]).arrange(RIGHT).scale(0.2).shift(DOWN)
+        hard_drive.add(byte)
+        self.play(FadeOut(new_messages, log, source, decimal_digits))
+        self.play(Create(hard_drive))
+        self.wait(1)
+        for i in range(10):
+            anims = []
+            for b in byte:
+                anims.append(b.animate.set_color(BLUE if random() > 0.5 or i == 9 else RED))
+            self.play(*anims)
+        self.wait(1)
+        num_messages = Tex("$Patterns = $", "$2^8$").set_color_by_tex("$2^8$", ORANGE).next_to(hard_drive, DOWN)
+        information = Tex("$Bits = $","$\log$", "$_2$", "$2^8$").set_color_by_tex("$_2$", BLUE).set_color_by_tex("$2^8$", ORANGE).next_to(num_messages, DOWN)
+        self.play(Write(num_messages))
+        self.play(Write(information))
+        self.wait(1)
+
+        self.play(hard_drive.animate.shift(2*UP + 3*LEFT),
+                  num_messages.animate.shift(2*UP + 3*LEFT),
+                  information.animate.shift(2*UP + 3*LEFT))
+        self.wait(1)
+        l1 = Line(10*LEFT, 10*RIGHT).shift(2*DOWN)
+        l2 = Line(10*UP, l1.get_center())
+        self.play(Create(l1), Create(l2))
+        self.wait(1)
+        hard_drive2 = hard_drive.copy().shift(6*RIGHT)
+        hard_drive3 = hard_drive.copy().next_to(hard_drive2)
+        self.play(Create(hard_drive2), Create(hard_drive3))
+        self.wait(1)
+
+        num_messages2 = Tex("$Patterns = $", "$2^{16}$").set_color_by_tex("$2^{16}$", ORANGE).next_to(VGroup(hard_drive2, hard_drive3), DOWN)
+        information2 = Tex("$Bits = $","$\log$", "$_2$", "$2^{16}$").set_color_by_tex("$_2$", BLUE).set_color_by_tex("$2^{16}$", ORANGE).next_to(num_messages2, DOWN)
+        self.play(Write(num_messages2), Write(information2))
+
+        diff_1 = Tex("$\\frac{2^{16}}{2^8} = 2^8$").shift(3*DOWN+2*LEFT)
+        diff_2 = Tex("$\\frac{\\log_2 2^{16}}{\\log_2 2^8} = 2$").shift(3*DOWN+2*RIGHT)
+        self.play(Transform(VGroup(num_messages.copy(), num_messages2.copy()), diff_1, replace_mobject_with_target_in_scene=True))
+        self.play(Transform(VGroup(information.copy(), information2.copy()), diff_2, replace_mobject_with_target_in_scene=True))
+        self.wait(1)
+
+
+
+
+class BSC():
     def __init__(self):
         self.input_bit_0 = Circle(radius=0.5, color=BLUE).shift(3*LEFT + 2*UP)
         self.input_bit_1 = Circle(radius=0.5, color=BLUE).shift(3*LEFT + 2*DOWN)
