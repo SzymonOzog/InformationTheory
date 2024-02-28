@@ -79,17 +79,15 @@ from manim_voiceover.services.gtts import GTTSService
 class InformationContent(VoiceoverScene):
     def construct(self):
         self.set_speech_service(
-            RecorderService()
-            # GTTSService(transcription_model='base')
+            # RecorderService()
+            GTTSService(transcription_model='base')
         )
         toc = TOC()
 
         with self.voiceover(
             """Hello and welcome to episode 1 in the series on Information Theory
             In this episode we will cover a topic that might be familiar to most people
-            with a bit of experience in computer science, so feel free to skip it if the
-            contents of it seems obvious to you. 
-            And the subject of todays episode is <bookmark mark='1'/>
+            with a bit of experience in computer science. And the subject of todays episode is <bookmark mark='1'/>
             Information, and more specifically <bookmark mark='2'/> how do we describe, and measure it"""
                             ) as trk:
             self.play(Write(toc.header.next_to(toc.entries[0].main, UP, aligned_edge=LEFT)))
@@ -98,24 +96,134 @@ class InformationContent(VoiceoverScene):
             self.play(*[Unwrite(e.main) for e in toc.entries[1:]])
             self.wait_until_bookmark("2")
             self.play(toc.entries[0].open())
-    
-        log = Tex("$\log$", "$_b$", "$N$", font_size=85)
+
+        self.play(FadeOut(toc.header, toc.entries[0].list, toc.entries[0].main))
+        hard_drive = Square()
+        hard_drive.add(Text("Hard Drive", font_size=20))
+        byte = VGroup(*[Circle(radius=0.5, fill_color = BLUE, color = BLUE, fill_opacity = 1) for _ in range(8)]).arrange(RIGHT).scale(0.2).shift(DOWN)
+        hard_drive.add(byte)
 
         with self.voiceover(
-            """The measure that we use for describing the amount <bookmark mark='1'/> of produced information is the logarithm
-            it's base <bookmark mark='2'/> corresponds to the unit which we have chosen and N<bookmark mark='3'/>
-            is the total number of possible states that could have been produced by the system that we are measuring.
-            This might seem a bit too abstract for now so let's jump to an example that will clarify this
+            """Imagine <bookmark mark='1'/> that you bought a very expensive 
+            hard drive that can store<bookmark mark='2'/> 8 binary digits, and you are the person
+            that needs to decide on what the measure for it's information capacity will be?   
             """
                             ) as trk:
             self.wait_until_bookmark("1")
-            self.play(Transform(VGroup(toc.entries[0].list, toc.entries[0].main, toc.header), log, replace_mobject_with_target_in_scene=True))
+            self.play(Create(hard_drive))
             self.wait_until_bookmark("2")
-            self.play(log.animate.set_color_by_tex("_b", BLUE))
-            self.wait_until_bookmark("3")
-            self.play(log.animate.set_color_by_tex("N", ORANGE))
+            while trk.get_remaining_duration () > 0:
+                anims = []
+                for b in byte:
+                    anims.append(b.animate.set_color(BLUE if random() > 0.5 else RED))
+                self.play(*anims, run_time=0.3)
 
-        self.play(Transform(log, Tex("$\log$", "$_b$", "$N$").set_color_by_tex("_b", BLUE).set_color_by_tex("$N$", ORANGE).shift(2*RIGHT)))
+        self.play(*[b.animate.set_color(BLUE) for b in byte])
+        with self.voiceover(
+            """One way that you could go about creating such a metric   
+            You could decide that the total amount of patterns<bookmark mark='b'/> that we can store should be 
+            the amount of information. 
+            """
+                            ) as trk:
+
+            self.wait_until_bookmark("b")
+            num_messages = Tex("$Patterns = $", "$2$", "$^8$").next_to(hard_drive, DOWN)
+            self.play(Write(num_messages))
+
+        with self.voiceover(
+            """To test how your measure behaves you imagine that you somehow managed to save some money
+            and get another hard drive<bookmark mark='1'/>
+            that can store an additional 8 binary digits of information there are now <bookmark mark='2'/>
+            two to the power of 16 distinct patterns that you can store
+            """
+                            ) as trk:
+            self.play(hard_drive.animate.shift(2*UP + 3*LEFT),
+                    num_messages.animate.shift(2*UP + 3*LEFT))
+            l1 = Line(10*LEFT, 10*RIGHT).shift(DOWN)
+            l2 = Line(10*UP, l1.get_center())
+            self.play(Create(l1), Create(l2))
+            hard_drive2 = hard_drive.copy().shift(5.5*RIGHT)
+            hard_drive3 = hard_drive.copy().next_to(hard_drive2)
+            r_drives = VGroup(hard_drive2, hard_drive3)
+            self.wait_until_bookmark("1")
+            self.play(Transform(hard_drive.copy(), r_drives, replace_mobject_with_target_in_scene=True))
+
+            self.wait_until_bookmark("2")
+            num_messages2 = Tex("$Patterns = $", "$2$", "$^{16}$").next_to(VGroup(hard_drive2, hard_drive3), DOWN)
+            self.play(Write(num_messages2))
+
+        message_difference = Tex("message difference").shift(2*DOWN+2*LEFT)
+        diff_1 = Tex("$\\frac{2^{16}}{2^8} = 2^8$").next_to(message_difference, DOWN)
+        bit_difference = Tex("bit difference").shift(2*DOWN+2*RIGHT)
+        diff_2 = MathTex("{16","\\over", "8}", "=", "2").set_color_by_tex("8", GREEN).set_color_by_tex("16", BLUE).next_to(bit_difference, DOWN)
+
+        self.wait(1)
+             
+        with self.voiceover("""
+            if you compare those two situations, the difference in possible messages you could store <bookmark mark='x'/>is  
+            2 to the power of 8 and it kind of does not feel like that should be the case, increasing our storage should not
+            increase our information exponentially, what we want instead is for our information content to double when we double 
+            our storage
+            """
+                            ) as trk:
+            self.wait_until_bookmark("x")
+            self.play(Write(message_difference))
+            self.play(Transform(VGroup(num_messages.copy(), num_messages2.copy()), diff_1, replace_mobject_with_target_in_scene=True))
+        
+
+        with self.voiceover("""
+            If you are perceptive, you might have noticed that dividing the number of binary digits that one of our drives can store<bookmark mark='1'/>
+            by the amount of digits that the second one<bookmark mark='2'/> can store gives us exactly<bookmark mark='3'/> the result we are looking for
+            but we want our equation for information in a nice compact form so let's write it out and transform it
+            """) as trk:
+
+            self.wait_until_bookmark("1")
+            bits_1 = num_messages.get_part_by_tex("^8") 
+            self.play(bits_1.animate.set_color(GREEN))
+
+            self.wait_until_bookmark("2")
+            bits_2 = num_messages2.get_part_by_tex("^{16}")
+            self.play(bits_2.animate.set_color(BLUE))
+            
+            self.wait_until_bookmark("3")
+            self.play(Transform(VGroup(bits_1.copy(), bits_2.copy()), diff_2, replace_mobject_with_target_in_scene=True))
+        
+        self.play(FadeOut(message_difference, diff_1, diff_2))
+        extraction_1 = Tex("$M$", "$ = $", "$2^I$").shift(2*DOWN)
+        extraction_2 = Tex("$log$", "$_2$", "$M$", "$ = $", "$log_2{2^I}$").shift(2*DOWN)
+        extraction_3 = Tex("$log$", "$_2$", "$M$", "$ = $", "$I$").shift(2*DOWN)
+        with self.voiceover("""
+            Our number of messages is<bookmark mark='1'/> M, and there are<bookmark mark='2'/> 2 to the power of information messages that we can store
+            To extract our information<bookmark mark='3'/> we can take the logarithm of both sides, and that gives us<bookmark mark='4'/> the equation for information
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Write(extraction_1.get_part_by_tex("M")))
+            self.wait_until_bookmark("2")
+            self.play(Write(extraction_1.get_part_by_tex("=")))
+            self.play(Write(extraction_1.get_part_by_tex("2^I")))
+            self.wait_until_bookmark("3")
+            self.play(Transform(extraction_1, extraction_2, replace_mobject_with_target_in_scene=True))
+            self.wait_until_bookmark("4")
+            self.play(Transform(extraction_2, extraction_3, replace_mobject_with_target_in_scene=True))
+
+        with self.voiceover("""
+        And like this we have come to an equation <bookmark mark='1'/> for information, but there is one final tweak that we have to make,
+        so far we have been only working with binary digits, so our logarithm had a base of two, let's just change it <bookmark mark='2'/> to an arbitrary one,
+                            so that it can be used for any base of information.
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(FadeOut(hard_drive, r_drives, l1, l2, num_messages, num_messages2))
+            self.play(Transform(extraction_3, Tex("$log$", "$_2$", "$M$", "$ = $", "$I$", font_size=85)))
+            self.wait_until_bookmark("2")
+            log = Tex("$\log$", "$_b$", "$M$", "$ = $", "$I$", font_size=85)
+            self.play(Transform(extraction_3, log, replace_mobject_with_target_in_scene=True))
+
+        with self.voiceover("""
+            Let's go over a quick example to demonstrate how the base works, and verify our equation once again
+            """) as trk:
+            pass
+
+        self.play(Transform(log, Tex("$\log$", "$_b$", "$M$").set_color_by_tex("_b", BLUE).set_color_by_tex("$M$", ORANGE).shift(2*RIGHT)))
 
         source = Square()
         source.add(Text("Information\nSource", font_size=20))
@@ -175,13 +283,11 @@ class InformationContent(VoiceoverScene):
         bits = VGroup(bit_0, bit_1)
 
         with self.voiceover(
-            """We can perform a simillar operation for any base of informaiton that we choose, 
-             for exaple imagine that our source<bookmark mark='1'/> is sending binary digits instead 
+            """And the same scenario works when our source<bookmark mark='1'/> is sending binary digits instead 
             after using it<bookmark mark='2'/> once we get one binary digit of information 
             commonly referred to as one bit of information<bookmark mark='3'/>
             two bits after using it twice <bookmark mark='4'/> and three after a third usage
-            """
-                            ) as trk:
+            """) as trk:
             self.wait_until_bookmark("1")
             self.play(Transform(decimal_digits, bits, replace_mobject_with_target_in_scene=True),FadeOut(new_messages))
 
@@ -198,133 +304,100 @@ class InformationContent(VoiceoverScene):
             self.wait(1)
             
             self.wait_until_bookmark("4")
-            binary_digits_3 = VGroup(*[Tex(x, color=ORANGE) for x in create_binary_digits(3)]).arrange(DOWN)
+            binary_digits_3 = VGroup(*[Tex(*[c for c in x], color=ORANGE) for x in create_binary_digits(3)]).arrange(DOWN)
             self.play(Transform(VGroup(bits.copy(), binary_digits_2), binary_digits_3, replace_mobject_with_target_in_scene=True))
             self.play(Transform(log, Tex("$\log$", "$_2$", "$8$", "$=$", "$3$").set_color_by_tex("_2", BLUE).set_color_by_tex("$8$", ORANGE).shift(2*RIGHT)))
             self.wait(1)
-            
-            hard_drive = Square()
-            hard_drive.add(Text("Hard Drive", font_size=20))
-            byte = VGroup(*[Circle(radius=0.5, fill_color = BLUE, color = BLUE, fill_opacity = 1) for _ in range(8)]).arrange(RIGHT).scale(0.2).shift(DOWN)
-            hard_drive.add(byte)
 
-        with self.voiceover(
-            """You might wonder why all the fuss with taking a logarithm, couldn't we just use the amount <bookmark mark='mess'/> of possible messages
-            as the amount of information? After all, they are increasing when we send more information, and it might be tempting to think
-            that information grows linearly with the amount of patterns.
+
+        with self.voiceover("""
+        So far we have only looked at how much information is contained inside a group of messages
+        but we also need to be able to measure how much information we gain when we become aware of 
+        some outcome
+        <bookmark mark='1'/>
+        By intuition, if someone told us that the 
+        <bookmark mark='2'/>hightest bit is 0
+        our space of possible<bookmark mark='3'/> messages is cut down in half.
             """) as trk:
-            self.wait_until_bookmark("mess")
-            self.play(Circumscribe(binary_digits_3))
-
-        with self.voiceover(
-            """And there are two equally good reasons for using a logarithm, first. It makes math much simpler to perform. 
-            And secondly, it is much more intuitive to think about information in terms of logarithm. And if you dont believe me, consider the following example
-            """) as trk:
-            pass
-
-
-        with self.voiceover(
-            """Imagine <bookmark mark='1'/> that you bought a very expensive 
-            hard drive that can store<bookmark mark='2'/> 8 binary digits of information  
-            there are <bookmark mark='3'/> two <bookmark mark='b'/> to the power of 8 distinct patterns that we can store
-            and the number of bits <bookmark mark='4'/> is log base two of the number of patterns
-            """
-                            ) as trk:
-            self.play(FadeOut(binary_digits_3, log, source, bits))
             self.wait_until_bookmark("1")
-            self.play(Create(hard_drive))
+            self.play(FadeOut(source,bits,log))
             self.wait_until_bookmark("2")
-            while trk.time_until_bookmark("3") > 0:
-                anims = []
-                for b in byte:
-                    anims.append(b.animate.set_color(BLUE if random() > 0.5 else RED))
-                self.play(*anims, run_time=0.3)
-                toc = TOC()
-            self.play(*[b.animate.set_color(BLUE) for b in byte])
-
-            self.wait_until_bookmark("b")
-            num_messages = Tex("$Patterns = $", "$2^8$").set_color_by_tex("$2^8$", ORANGE).next_to(hard_drive, DOWN)
-            self.wait_until_bookmark("4")
-            information = Tex("$Bits = $","$\log$", "$_2$", "$2^8$").set_color_by_tex("$_2$", BLUE).set_color_by_tex("$2^8$", ORANGE).next_to(num_messages, DOWN)
-            self.play(Write(num_messages))
-            self.play(Write(information))
-        self.wait(1)
-
-        with self.voiceover(
-            """Now imagine that you somehow managed to save some money and get another hard drive<bookmark mark='1'/>
-            that can store an additional 8 binary digits of information there are now <bookmark mark='2'/>
-            two to the power of 16 distinct patterns that you can store
-            and the number of bits is log base two <bookmark mark='3'/> of  two to the power of 16.
-            """
-                            ) as trk:
-            self.play(hard_drive.animate.shift(2*UP + 3*LEFT),
-                    num_messages.animate.shift(2*UP + 3*LEFT),
-                    information.animate.shift(2*UP + 3*LEFT))
-            l1 = Line(10*LEFT, 10*RIGHT).shift(DOWN)
-            l2 = Line(10*UP, l1.get_center())
-            self.play(Create(l1), Create(l2))
-            hard_drive2 = hard_drive.copy().shift(5.5*RIGHT)
-            hard_drive3 = hard_drive.copy().next_to(hard_drive2)
-            r_drives = VGroup(hard_drive2, hard_drive3)
-            self.wait_until_bookmark("1")
-            self.play(Transform(hard_drive.copy(), r_drives, replace_mobject_with_target_in_scene=True))
-
-            self.wait_until_bookmark("2")
-            num_messages2 = Tex("$Patterns = $", "$2^{16}$").set_color_by_tex("$2^{16}$", ORANGE).next_to(VGroup(hard_drive2, hard_drive3), DOWN)
+            self.play(*[x.submobjects[0].animate.set_color(GREEN) for x in binary_digits_3[:4]])
             self.wait_until_bookmark("3")
-            information2 = Tex("$Bits = $","$\log$", "$_2$", "$2^{16}$").set_color_by_tex("$_2$", BLUE).set_color_by_tex("$2^{16}$", ORANGE).next_to(num_messages2, DOWN)
-            self.play(Write(num_messages2), Write(information2))
+            self.play(*[x.animate.set_color(GREY) for x in binary_digits_3[4:]])
 
-            message_difference = Tex("message difference").shift(2*DOWN+2*LEFT)
-            diff_1 = Tex("$\\frac{2^{16}}{2^8} = 2^8$").next_to(message_difference, DOWN)
-            bit_difference = Tex("bit difference").shift(2*DOWN+2*RIGHT)
-            diff_2 = Tex("$\\frac{\\log_2 2^{16}}{\\log_2 2^8}$").next_to(bit_difference, DOWN)
-
-        self.wait(1)
-             
         with self.voiceover("""
-            if you compare those two situations, the difference in possible messages you could store <bookmark mark='x'/>is  
-            2 to the power of 8 and the difference in bits <bookmark mark='4'/> 
-            is log of 2 to the power 16 divided by log of 2 to the power 8
-            which is just <bookmark mark='5'/> 16 over 8 leaving us with twice as many bits <bookmark mark='6'/>
-            so you now see how much more intuitive it is to think that doubling our storage doubles our information capacity<bookmark mark='7'/>
-            and the math just boils down to simple addition when we add another message or storage unit 
-            and multiplication when we add another information source.
-            """
-                            ) as trk:
-            self.wait_until_bookmark("x")
-            self.play(Write(message_difference))
-            self.play(Transform(VGroup(num_messages.copy(), num_messages2.copy()), diff_1, replace_mobject_with_target_in_scene=True))
-
-            self.wait_until_bookmark("4")
-            self.play(Write(bit_difference))
-            self.play(Transform(VGroup(information.copy(), information2.copy()), diff_2, replace_mobject_with_target_in_scene=True))
-            self.wait_until_bookmark("5")
-            self.play(Transform(diff_2, Tex("$\\frac{16}{8}$").move_to(diff_2)))
-            self.wait_until_bookmark("6")
-            self.play(Transform(diff_2, Tex("$\\frac{16}{8} = 2$").move_to(diff_2)))
-            self.wait_until_bookmark("7")
-            self.play(Circumscribe(VGroup(diff_2, bit_difference)))
+        Again, when we get the knowledge that the
+        <bookmark mark='2'/>next bit is also 0
+        our space of possible<bookmark mark='3'/> messages is cut down in half one more time.
+            """) as trk:
+            self.wait_until_bookmark("2")
+            self.play(*[x.submobjects[1].animate.set_color(GREEN) for x in binary_digits_3[:2]])
+            self.wait_until_bookmark("3")
+            self.play(*[x.animate.set_color(GREY) for x in binary_digits_3[2:4]])
+        
+        extraction_1 = MathTex("p", " = ", "(", "{1", "\\over", "2}", ")", "^I").scale(2)
+        extraction_base = MathTex("p", " = ", "(", "{1", "\\over", "b}", ")", "^I").scale(2)
+        extraction_2 = MathTex("p", " = ", "(", "{1^I", "\\over", "2^I}", ")").scale(2)
+        extraction_3 = MathTex("p", " = ", "(", "{1", "\\over", "2^I}", ")").scale(2)
+        extraction_4 = MathTex("2^I", " = ", "(", "{1", "\\over", "p}", ")").scale(2)
+        extraction_5 = MathTex("log", "_2", "2^I", " = ", "log_2", "(", "{1", "\\over", "p}", ")").scale(2)
+        extraction_6 = MathTex("I", " = ", "log_2", "(", "{1", "\\over", "p}", ")").scale(2)
+        
         with self.voiceover("""
-            Hence the choice for the logarithmic measure of information, and since all data can be stored as binary data,
-            <bookmark mark='8'/> bits are the basic unit of information and our logarithm has a base of two 
-            <bookmark mark='9'/>
-            """
-                            ) as trk:
-            self.wait_until_bookmark("8")
-            all = VGroup(diff_1, diff_2, message_difference, bit_difference, hard_drive, r_drives, l1, l2, num_messages, information, num_messages2, information2)
-            self.play(Transform(all, Tex("$bits = log_2{N}$",font_size=100)))
-            self.wait_until_bookmark("9")
-            self.wait(1)
-            self.play(FadeOut(all))
-        self.wait(1)
+            And this is exactly how we formulate the information content of a single observation,
+            <bookmark mark='1'/>, getting one bit of information reduces our probability by a half
+            or if you want a more general case, getting one unit of information 
+            <bookmark mark='2'/>
+            reduces the possible space of messages by a factor of that unit
+            """) as trk:
+            self.play(FadeOut(binary_digits_3))
+            self.wait_until_bookmark("1")
+            self.play(Write(extraction_1))
+            self.wait_until_bookmark("2")
+            self.play(Transform(extraction_1, extraction_base, replace_mobject_with_target_in_scene=True))
+
+        with self.voiceover("""
+            In this series the base unit of information will be<bookmark mark='1'/> binary digits, because
+            it's the most commonly used and all information can be stored in binary digits
+            To extract the information from that equation we perform a similar logarithm trick as before
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Transform(extraction_base, extraction_1, replace_mobject_with_target_in_scene=True))
+        self.play(Transform(extraction_1, extraction_2, replace_mobject_with_target_in_scene=True))
+        self.play(Transform(extraction_2, extraction_3, replace_mobject_with_target_in_scene=True))
+        self.play(Transform(extraction_3, extraction_4, replace_mobject_with_target_in_scene=True))
+        self.play(TransformMatchingTex(extraction_4, extraction_5, replace_mobject_with_target_in_scene=True))
+        self.play(TransformMatchingTex(extraction_5, extraction_6, replace_mobject_with_target_in_scene=True))
+        
+        old_eq = Tex("$I$", "$ = $", "$log$", "$_2$", "$M$").scale(2).next_to(extraction_6, DOWN,aligned_edge=LEFT)
+        with self.voiceover("""
+        this leaves us with our final equation, for information content it will be very important
+        so make sure that you understand it and all of it's implications. As an exercise
+        try to explain to yourself why this equation,<bookmark mark='1'/> and the equation for information content of 
+        a group of messages are essentially the same equation
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Transform(extraction_6.copy(), old_eq, replace_mobject_with_target_in_scene=True))
+                
+        self.wait(3)
+        self.play(FadeOut(extraction_6, old_eq))
+
         toc = TOC()
-        self.play(Write(toc.header.next_to(toc.entries[0].main, UP, aligned_edge=LEFT)))
-        self.play(*[Write(e.main) for e in toc.entries])
-        self.play(toc.entries[0].main.animate.set_color(GREEN))
+        with self.voiceover("""
+        And with this, <bookmark mark='1'/>we come to the end of the first episode
+        <bookmark mark='2'/> and our knowledge on Information deepens.
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Write(toc.header.next_to(toc.entries[0].main, UP, aligned_edge=LEFT)))
+            self.play(*[Write(e.main) for e in toc.entries])
+            self.wait_until_bookmark("2")
+            self.play(toc.entries[0].main.animate.set_color(GREEN))
         self.wait(2)
         self.play(FadeOut(toc.header, *[e.main for e in toc.entries]))
         self.wait(2)
+
+
 
 class BSC():
     def __init__(self):
