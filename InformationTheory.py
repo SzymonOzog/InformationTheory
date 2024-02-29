@@ -382,7 +382,7 @@ class InformationContent(VoiceoverScene):
                 
         self.wait(3)
         self.play(FadeOut(extraction_6, old_eq))
-
+# 
         toc = TOC()
         with self.voiceover("""
         And with this, <bookmark mark='1'/>we come to the end of the first episode
@@ -488,62 +488,133 @@ class BinarySymmetricChannel(Scene):
             self.play(FadeIn(result, target_position=target))
 
 
-class Entropy(Scene):
+class Entropy(VoiceoverScene):
     def construct(self):
-        coin = Circle(radius=1, color=BLUE).shift(1.5*LEFT)
-        heads = Text("H", color=BLUE).scale(1.5).move_to(coin.get_center())
-        
-        coin2 = Circle(radius=1, color=RED).shift(1.5*RIGHT)
-        tails = Text("T", color=RED).scale(1.5).move_to(coin2.get_center())
+        self.set_speech_service(
+            # RecorderService()
+            GTTSService(transcription_model='base')
+        )
+        toc = TOC()
+        toc.entries[0].main.set_color(GREEN)
 
-        self.play(FadeIn(coin), Write(heads))
-        self.play(FadeIn(coin2), Write(tails))
-        coin_flipping_text = Text("Flip a fair coin: Equally likely probabilities").shift(2*DOWN)
-        self.play(Write(coin_flipping_text))
-        self.wait(1)
+        with self.voiceover(
+            """Hello and welcome to episode 2 in our series on Information Theory
+            In this episode we will introduce the most fundamental formula
+            in information theory, which is <bookmark mark='1'/>
+            Entropy, we will describe what it means  
+            and how do we use <bookmark mark='2'/>it to describe the level of uncertainty, surprise and information
+            of a random variable"""
+                            ) as trk:
+            self.play(Write(toc.header.next_to(toc.entries[0].main, UP, aligned_edge=LEFT)))
+            self.play(*[Write(e.main) for e in toc.entries])
+            self.wait_until_bookmark("1")
+            self.play(*[Unwrite(e.main) for e in toc.entries[2:]])
+            self.wait_until_bookmark("2")
+            self.play(toc.entries[1].open())
+            
+        general_entropy_formula = Tex("$H(X) =$", "$\sum$", "$p(x)$", "$\cdot$", "$\log_2$", "$($", "$\\frac{1}{p(x)}$", "$)$")
+        general_entropy_formula2 = Tex("$H(X) =$", "$\\mathbb{E}[I(X)]$").next_to(general_entropy_formula, DOWN, aligned_edge=LEFT)
+        with self.voiceover(""" 
+        And this is the formula that was established by Claude Shannon as the measure of entropy 
+        of a set of possible events, and for those that are familiar with statistics, this equation is equivalent 
+        to <bookmark mark='1'/> an expected value for the information content of our random variable 
+            """) as trk:
+            self.play(Transform(VGroup(toc.entries[1].list, toc.entries[0].main, toc.entries[1].main, toc.header), general_entropy_formula, replace_mobject_with_target_in_scene=True))
+            self.wait_until_bookmark("1")
+            self.play(Transform(general_entropy_formula.copy(), general_entropy_formula2, replace_mobject_with_target_in_scene=True))
 
-        entropy_formula_1 = Tex("$H(X) =$", "$-0.5 \cdot \log_2(0.5)$", "$- 0.5 \cdot \log_2(0.5)$").scale(0.8).next_to(coin_flipping_text, DOWN)
-        entropy_formula_1[1].set_color(BLUE)
-        entropy_formula_1[2].set_color(RED)
+        with self.voiceover(""" 
+        Let's go over a few examples
+            """) as trk:
+           self.play(FadeOut(general_entropy_formula2)) 
 
-        self.play(Write(entropy_formula_1))
-        self.wait(2)
+        self.play(general_entropy_formula.animate.shift(3*UP))
 
-        self.play(*[Indicate(x, color=BLUE_A) for x in [*coin, *heads, entropy_formula_1[1]]])
-        self.play(*[Indicate(x, color=RED_A) for x in [*coin2, *tails, entropy_formula_1[2]]])
-        self.wait(2)
+        with self.voiceover(""" 
+        The classical example of a random variable is<bookmark mark='1'/> flipping a coin, there are 2 states,<bookmark mark='2'/> 
+        <bookmark mark='3'/>heads and tails and they are both equally probable
+            """) as trk:
+            self.wait_until_bookmark("1")
+            coin_flipping_text = Text("Flip a fair coin: Equally likely probabilities").shift(2*DOWN)
+            self.play(Write(coin_flipping_text))
+
+            self.wait_until_bookmark("2")
+            coin = Circle(radius=1, color=BLUE).shift(1.5*LEFT)
+            heads = Text("H", color=BLUE).scale(1.5).move_to(coin.get_center())
+            self.play(FadeIn(coin), Write(heads))
+            
+            self.wait_until_bookmark("3")
+            coin2 = Circle(radius=1, color=RED).shift(1.5*RIGHT)
+            tails = Text("T", color=RED).scale(1.5).move_to(coin2.get_center())
+            self.play(FadeIn(coin2), Write(tails))
+            entropy_formula_1 = Tex("$H(X) =$", "$-0.5 \cdot \log_2(0.5)$", "$- 0.5 \cdot \log_2(0.5)$", "$ = 1$").scale(0.8).next_to(coin_flipping_text, DOWN)
+            entropy_formula_1[1].set_color(BLUE)
+            entropy_formula_1[2].set_color(RED)
+
+        with self.voiceover(""" 
+        We can plug in the values <bookmark mark='1'/>into our entropy equation. What it tells us is that there is exactly one 
+        bit of uncertainty about the outcome, and it makes absolute sense, there are two states - so they can be represented by one bit
+        and they are both equally probable so we cannot make any accurate predictions about the outcome of a coin flip  
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Transform(general_entropy_formula.copy(), entropy_formula_1[0], replace_mobject_with_target_in_scene=True),
+                      Transform(VGroup(coin, heads).copy(), entropy_formula_1[1], replace_mobject_with_target_in_scene=True),
+                      Transform(VGroup(coin2, tails).copy(), entropy_formula_1[2], replace_mobject_with_target_in_scene=True))
+            self.play(Write(entropy_formula_1[3]))
+
 
         # fade away all objects
-        self.play(FadeOut(entropy_formula_1), FadeOut(coin), FadeOut(heads), FadeOut(coin_flipping_text), FadeOut(coin2), FadeOut(tails))
 
+        def en(probs): return f"{sum([-x*math.log2(x) for x in probs]):.2f}"
 
+        with self.voiceover(""" 
+        Another example that we can look at <bookmark mark='1'/>is picking a ball, imagine that someone throws <bookmark mark='2'/>a few balls of different colors
+        into a bag and picks one out at random, you know that there are more red balls than blue ones so the outcome 
+        should not be as surprising as when we flipped a fair coin 
+            """) as trk:
         # Non equally likely probabilities
-        columns = 5
-        n_balls = 10
-        balls = [Dot(color=BLUE if i < 7 else RED).move_to((i%columns) * RIGHT + (i//columns)*DOWN + 2*LEFT + 2*UP) for i in range(n_balls)]
-        self.play(FadeIn(*balls))
+            self.play(FadeOut(entropy_formula_1), FadeOut(coin), FadeOut(heads), FadeOut(coin_flipping_text), FadeOut(coin2), FadeOut(tails))
+            ball_text = Text("Pick a ball: Non equally likely probabilities").shift(2*DOWN)
+            self.wait_until_bookmark("1")
+            self.play(Write(ball_text))
+            self.wait(1)
 
-        ball_text = Text("Pick a ball: Non equally likely probabilities").shift(2*DOWN)
-        self.play(Write(ball_text))
-        self.wait(1)
+            columns = 5
+            n_balls = 10
 
-        entropy_formula_2 = Tex("$H(X) =$", "$-\\frac{7}{10} \cdot \log_2(\\frac{7}{10})$", "$- \\frac{3}{10} \cdot \log_2(\\frac{3}{10})$").scale(0.8).next_to(ball_text, DOWN)
-        entropy_formula_2[1].set_color(BLUE)
-        entropy_formula_2[2].set_color(RED)
+            balls = [Dot(color=BLUE if i < 7 else RED).move_to((i%columns) * RIGHT + (i//columns)*DOWN + 2*LEFT + 2*UP) for i in range(n_balls)]
+            self.wait_until_bookmark("2")
+            self.play(Create(*balls))
 
-        self.play(Write(entropy_formula_2))
-        self.wait(2)
+        with self.voiceover(""" 
+        And after doing<bookmark mark='1'/> the math we can see that the outcome is smaller, the event is still random
+        but we are not as uncertain of the outcome since we know that the probability for picking a red ball is much higher.
+            """) as trk:
 
-        self.play(*[Indicate(x, color=BLUE_A) for x in [*balls[:7], entropy_formula_2[1]]])
-        self.play(*[Indicate(x, color=RED_A) for x in [*balls[7:], entropy_formula_2[2]]])
-        self.wait(2)
+            entropy_formula_2 = Tex("$H(X) =$", "$-\\frac{7}{10} \cdot \log_2(\\frac{7}{10})$",
+                                     "$- \\frac{3}{10} \cdot \log_2(\\frac{3}{10})$", f"$= {en([0.7, 0.3])}$").scale(0.8).next_to(ball_text, DOWN)
+            entropy_formula_2[1].set_color(BLUE)
+            entropy_formula_2[2].set_color(RED)
+            self.wait_until_bookmark("1")
+
+            self.play(Transform(general_entropy_formula.copy(), entropy_formula_2[0], replace_mobject_with_target_in_scene=True),
+                      Transform(VGroup(*balls[:7]).copy(), entropy_formula_2[1], replace_mobject_with_target_in_scene=True),
+                      Transform(VGroup(*balls[7:]).copy(), entropy_formula_2[2], replace_mobject_with_target_in_scene=True))
+            self.play(Write(entropy_formula_2[3]))
         # fade away all objects
-        self.play(FadeOut(entropy_formula_2), FadeOut(*balls), FadeOut(ball_text))
 
-        # Binary Entropy Formula
-        binary_entropy_formula = Tex("$H_b(p) =$", "$-p \cdot \log_2(p)$", "$- (1-p) \cdot \log_2(1-p)$").shift(2*DOWN)
-        self.play(Write(binary_entropy_formula))
-        self.wait(2)
+        with self.voiceover(""" 
+        The entropy of a two event random variable <bookmark mark='1'/>that we have been looking at so far is called a Binary entropy,
+        and since the probabilities need to add up to 1 <bookmark mark='2'/>we can describe it using only one value p as an unknown 
+        variable 
+                    """) as trk:
+            self.play(FadeOut(entropy_formula_2), FadeOut(*balls), FadeOut(ball_text))
+            self.wait_until_bookmark("1")
+            binary_entropy_formula = Tex("$H_b(p) =$", "$-p \cdot \log_2(p_1)$", "$- (p_2) \cdot \log_2(p_2)$").shift(2*DOWN)
+            self.play(Transform(binary_entropy_formula, Tex("$H_b(p) =$", "$-p \cdot \log_2(p)$", "$- (1-p) \cdot \log_2(1-p)$").shift(2*DOWN)))
+            self.wait_until_bookmark("2")
+            self.play(Write(binary_entropy_formula))
+
 
         # H(p) Chart
         axes = Axes(
@@ -562,6 +633,15 @@ class Entropy(Scene):
         dot = Dot(point=initial_point)
 
         dot.add_updater(lambda x: x.move_to(axes.c2p(t.get_value(), func(t.get_value()))))
+        def bin_ent(p): 
+            try:
+                 return f"{(-p*math.log2(p)-(1-p)*math.log2(1-p)):.2f}"
+            except:
+                return 0
+
+        binary_entropy_formula.add_updater(lambda x: x.become(
+            Tex(f"$H_b({t.get_value():.2f}) =$", f"$-{t.get_value():.2f} \cdot \log_2({t.get_value():.2f})$", 
+                f"$- (1-{t.get_value():.2f} \cdot \log_2(1-{t.get_value():.2f})$", f"$={bin_ent(t.get_value())}$").shift(2*DOWN)))
 
         # Creating curve for y = -plog2(p) - (1-p)log2(1-p)
         graph = axes.plot(
@@ -570,56 +650,74 @@ class Entropy(Scene):
             x_range=[0,1]
         )
         labels = axes.get_axis_labels("p", "H(p)")
-        self.play(
-            Create(axes), 
-            Create(graph), 
-            Write(labels)
-        )
-        self.wait(2)
 
-        self.play(Create(dot))
-
-        self.play(t.animate.set_value(0.5))
-        self.play(Transform(binary_entropy_formula, Tex("$H_b(0.5) =$", "$-0.5 \cdot \log_2(0.5)$", "$- (1-0.5) \cdot \log_2(1-0.5)$", "$=1$").shift(2*DOWN)))
-
-        self.wait(2)
-
-        self.play(t.animate.set_value(0))
-        self.play(Transform(binary_entropy_formula, Tex("$H_b(0) =$", "$-0 \cdot \log_2(0)$", "$- (1-0) \cdot \log_2(1-0)$", "$=0$").shift(2*DOWN)))
-
-        self.wait(2)
-    
-        self.play(t.animate.set_value(1))
-        self.play(Transform(binary_entropy_formula, Tex("$H_b(1) =$", "$-1 \cdot \log_2(1)$", "$- (1-1) \cdot \log_2(1-1)$", "$=0$").shift(2*DOWN)))
-
-        self.wait(2)
+        with self.voiceover(""" 
+        When we graph <bookmark mark='1'/> a function for binary entropy we can see more clearly what it means, and how it relates to all of the properties
+        mentioned before, <bookmark mark='2'/>it is at it's peak when the probabilities for both events are equal, 
+        and intuitively it goes <bookmark mark='3'/>to 0 when we become certain of the<bookmark mark='4'/> outcome  
+                             - meaning that there is no uncertainty about the event,
+                            there is no surprise of the outcome, and it provides us with no information 
+                    """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(
+                Create(axes), 
+                Create(graph), 
+                Write(labels)
+            )
+            self.play(Create(dot))
+            self.wait_until_bookmark("2")
+            self.play(t.animate.set_value(0.5))
+            # self.play(Transform(binary_entropy_formula, Tex("$H_b(0.5) =$", "$-0.5 \cdot \log_2(0.5)$", "$- (1-0.5) \cdot \log_2(1-0.5)$", "$=1$").shift(2*DOWN)))
+            self.wait_until_bookmark("3")
+            self.play(t.animate.set_value(0))
+            # self.play(Transform(binary_entropy_formula, Tex("$H_b(0) =$", "$-0 \cdot \log_2(0)$", "$- (1-0) \cdot \log_2(1-0)$", "$=0$").shift(2*DOWN)))
+            self.wait_until_bookmark("4")
+            self.play(t.animate.set_value(1))
+            # self.play(Transform(binary_entropy_formula, Tex("$H_b(1) =$", "$-1 \cdot \log_2(1)$", "$- (1-1) \cdot \log_2(1-1)$", "$=0$").shift(2*DOWN)))
 
         #fade out everything
         self.play(FadeOut(axes), FadeOut(graph), FadeOut(labels), FadeOut(dot), FadeOut(binary_entropy_formula))
 
-        # General Entropy Formula
-        general_entropy_formula = Tex("$H(X) =$", "$\sum p(x) \cdot \log_2\\left(\\frac{1}{p(x)}\\right)$").scale(0.9).next_to(ball_text, UP)
-        self.play(Write(general_entropy_formula))
+        with self.voiceover(""" 
+        Let's get back to our ball<bookmark mark='1'/> example and see what happens with our entropy
+        when we <bookmark mark='2'/>throw a few more balls into our bag. As you might have expected, <bookmark mark='3'/>there are now
+        more possible events so our uncertainty of the outcome increases. This is another property of the entropy function
+        - adding another event that has a probability greater than 0, increases entropy
+                    """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(FadeIn(entropy_formula_2.shift(UP)), FadeIn(*balls))
+            new_balls = [Dot(color=GREEN).move_to(balls[0].get_center() + 2*DOWN + i * RIGHT) for i in range(5)]
+            self.wait_until_bookmark("2")
+            self.play(FadeIn(*new_balls))
+            updated_entropy_formula_2 = Tex("$H(X) =$", "$-\\frac{7}{15} \cdot \log_2(\\frac{7}{15})$", 
+                                            "$- \\frac{3}{15} \cdot \log_2(\\frac{3}{15})$", 
+                                            "$- \\frac{5}{15} \cdot \log_2(\\frac{5}{15})$", f"$ = {en([7/15, 3/15, 5/15])}$").scale(0.8).move_to(ball_text.get_center())
+            updated_entropy_formula_2[1].set_color(BLUE)
+            updated_entropy_formula_2[2].set_color(RED)
+            updated_entropy_formula_2[3].set_color(GREEN)
+            self.wait_until_bookmark("3")
+            self.play(Transform(entropy_formula_2,updated_entropy_formula_2),replace_mobject_with_target_in_scene=True)
+
+
+        self.wait(1)
+        self.play(FadeOut(*balls, *new_balls, general_entropy_formula, entropy_formula_2))
         self.wait(1)
 
-        self.play(FadeIn(entropy_formula_2.shift(UP)), FadeIn(*balls))
-        new_balls = [Dot(color=GREEN).move_to(balls[0].get_center() + 2*DOWN + i * RIGHT) for i in range(5)]
-        self.play(FadeIn(*new_balls))
-        updated_entropy_formula_2 = Tex("$H(X) =$", "$-\\frac{7}{15} \cdot \log_2(\\frac{7}{15})$", "$- \\frac{3}{15} \cdot \log_2(\\frac{3}{15})$", "$- \\frac{5}{15} \cdot \log_2(\\frac{3}{15})$").scale(0.8).move_to(ball_text.get_center())
-        updated_entropy_formula_2[1].set_color(BLUE)
-        updated_entropy_formula_2[2].set_color(RED)
-        updated_entropy_formula_2[3].set_color(GREEN)
-        self.play(Transform(entropy_formula_2,updated_entropy_formula_2),replace_mobject_with_target_in_scene=True)
-        self.remove(*balls[:7], updated_entropy_formula_2[1])
-        self.play(*[Indicate(x, color=BLUE_A) for x in [*balls[:7], updated_entropy_formula_2[1]]])
-        self.add(*balls[:7], updated_entropy_formula_2[1])
-        self.remove(*balls[7:], updated_entropy_formula_2[2])
-        self.play(*[Indicate(x, color=RED_A) for x in [*balls[7:], updated_entropy_formula_2[2]]])
-        self.add(*balls[7:], updated_entropy_formula_2[2])
-        self.remove(*new_balls, updated_entropy_formula_2[3])
-        self.play(*[Indicate(x, color=GREEN_A) for x in [*new_balls, updated_entropy_formula_2[3]]])
-        self.add(*new_balls, updated_entropy_formula_2[3])
-        self.wait(1)
+        toc = TOC()
+        toc.entries[0].main.animate.set_color(GREEN)
+        with self.voiceover("""
+        And with this, <bookmark mark='1'/>we come to the end of the first episode
+        <bookmark mark='2'/> and our knowledge on Information deepens.
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Write(toc.header.next_to(toc.entries[0].main, UP, aligned_edge=LEFT)))
+            self.play(*[Write(e.main) for e in toc.entries])
+            self.wait_until_bookmark("2")
+            self.play(toc.entries[1].main.animate.set_color(GREEN))
+        self.wait(2)
+        self.play(FadeOut(toc.header, *[e.main for e in toc.entries]))
+        self.wait(2)
+
         
 
 class EntropyBoxRepresentation:
@@ -1884,4 +1982,3 @@ class TableOfContents(VoiceoverScene):
             self.wait(1)
             self.play(e.close())
             self.wait(1)
-        
