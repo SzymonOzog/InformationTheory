@@ -524,6 +524,12 @@ class Entropy(VoiceoverScene):
             self.play(Transform(general_entropy_formula.copy(), general_entropy_formula2, replace_mobject_with_target_in_scene=True))
 
         with self.voiceover(""" 
+        You might also see the entropy written out like this, were we negate the sum instead of inverting the probability in the logarithm
+        As an exercise you are encouraged to prove that both are exactly the same
+            """) as trk:
+            self.play(Transform(general_entropy_formula, Tex("$H(X) =$", "$-\sum$", "$p(x)$", "$\cdot$", "$\log_2$", "$($", "$p(x)$", "$)$")))
+           
+        with self.voiceover(""" 
         Let's go over a few examples
             """) as trk:
            self.play(FadeOut(general_entropy_formula2)) 
@@ -584,7 +590,7 @@ class Entropy(VoiceoverScene):
 
             balls = [Dot(color=BLUE if i < 7 else RED).move_to((i%columns) * RIGHT + (i//columns)*DOWN + 2*LEFT + 2*UP) for i in range(n_balls)]
             self.wait_until_bookmark("2")
-            self.play(Create(*balls))
+            self.play(*[Create(b) for b in balls])
 
         with self.voiceover(""" 
         And after doing<bookmark mark='1'/> the math we can see that the outcome is smaller, the event is still random
@@ -639,9 +645,6 @@ class Entropy(VoiceoverScene):
             except:
                 return 0
 
-        binary_entropy_formula.add_updater(lambda x: x.become(
-            Tex(f"$H_b({t.get_value():.2f}) =$", f"$-{t.get_value():.2f} \cdot \log_2({t.get_value():.2f})$", 
-                f"$- (1-{t.get_value():.2f} \cdot \log_2(1-{t.get_value():.2f})$", f"$={bin_ent(t.get_value())}$").shift(2*DOWN)))
 
         # Creating curve for y = -plog2(p) - (1-p)log2(1-p)
         graph = axes.plot(
@@ -666,13 +669,19 @@ class Entropy(VoiceoverScene):
             )
             self.play(Create(dot))
             self.wait_until_bookmark("2")
+            binary_entropy_formula.add_updater(lambda x: x.become(
+                Tex(f"$H_b({t.get_value():.2f}) =$", f"$-{t.get_value():.2f} \cdot \log_2({t.get_value():.2f})$", 
+                    f"$- (1-{t.get_value():.2f} \cdot \log_2(1-{t.get_value():.2f})$", f"$={bin_ent(t.get_value())}$").shift(2*DOWN)))
             self.play(t.animate.set_value(0.5))
+            self.play(Indicate(binary_entropy_formula[3]))
             # self.play(Transform(binary_entropy_formula, Tex("$H_b(0.5) =$", "$-0.5 \cdot \log_2(0.5)$", "$- (1-0.5) \cdot \log_2(1-0.5)$", "$=1$").shift(2*DOWN)))
             self.wait_until_bookmark("3")
             self.play(t.animate.set_value(0))
+            self.play(Indicate(binary_entropy_formula[3]))
             # self.play(Transform(binary_entropy_formula, Tex("$H_b(0) =$", "$-0 \cdot \log_2(0)$", "$- (1-0) \cdot \log_2(1-0)$", "$=0$").shift(2*DOWN)))
             self.wait_until_bookmark("4")
             self.play(t.animate.set_value(1))
+            self.play(Indicate(binary_entropy_formula[3]))
             # self.play(Transform(binary_entropy_formula, Tex("$H_b(1) =$", "$-1 \cdot \log_2(1)$", "$- (1-1) \cdot \log_2(1-1)$", "$=0$").shift(2*DOWN)))
 
         #fade out everything
@@ -688,7 +697,7 @@ class Entropy(VoiceoverScene):
             self.play(FadeIn(entropy_formula_2.shift(UP)), FadeIn(*balls))
             new_balls = [Dot(color=GREEN).move_to(balls[0].get_center() + 2*DOWN + i * RIGHT) for i in range(5)]
             self.wait_until_bookmark("2")
-            self.play(FadeIn(*new_balls))
+            self.play(*[Create(b) for b in new_balls])
             updated_entropy_formula_2 = Tex("$H(X) =$", "$-\\frac{7}{15} \cdot \log_2(\\frac{7}{15})$", 
                                             "$- \\frac{3}{15} \cdot \log_2(\\frac{3}{15})$", 
                                             "$- \\frac{5}{15} \cdot \log_2(\\frac{5}{15})$", f"$ = {en([7/15, 3/15, 5/15])}$").scale(0.8).move_to(ball_text.get_center())
@@ -700,14 +709,16 @@ class Entropy(VoiceoverScene):
 
 
         self.wait(1)
-        self.play(FadeOut(*balls, *new_balls, general_entropy_formula, entropy_formula_2))
+        self.play(FadeOut(*balls, *new_balls, general_entropy_formula, updated_entropy_formula_2))
         self.wait(1)
 
         toc = TOC()
         toc.entries[0].main.animate.set_color(GREEN)
         with self.voiceover("""
-        And with this, <bookmark mark='1'/>we come to the end of the first episode
-        <bookmark mark='2'/> and our knowledge on Information deepens.
+        And this is where we will end the second episode  <bookmark mark='1'/>
+        hopefully you now have an intuitive understanding <bookmark mark='2'/> of Entropy
+        If there are still things that aren't clear please rewind the video as the next one will 
+        be building up on everything that we have learned in this episode 
             """) as trk:
             self.wait_until_bookmark("1")
             self.play(Write(toc.header.next_to(toc.entries[0].main, UP, aligned_edge=LEFT)))
