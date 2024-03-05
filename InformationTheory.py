@@ -494,8 +494,7 @@ class Entropy(VoiceoverScene):
             # RecorderService()
             GTTSService(transcription_model='base')
         )
-        toc = TOC()
-        toc.entries[0].main.set_color(GREEN)
+        toc = TOC(1)
 
         with self.voiceover(
             """Hello and welcome to episode 2 in our series on Information Theory
@@ -806,21 +805,30 @@ class EntropyBoxRepresentation:
             return self
 
 
-class TwoEventEntropy(Scene):
+class TwoEventEntropy(VoiceoverScene):
     def construct(self):
-        joint_entropy_text = Tex("Joint Entropy")
-        joint_entropy_text.shift(UP)
-        self.play(Write(joint_entropy_text))
-        conditional_entropy_text = Tex("Conditional Entropy")
-        self.play(Write(conditional_entropy_text))
-        mutual_information_text = Tex("Mutual Information")
-        mutual_information_text.shift(DOWN)
-        self.play(Write(mutual_information_text))
 
-        self.wait(1)
-        self.play(FadeOut(joint_entropy_text), FadeOut(conditional_entropy_text), FadeOut(mutual_information_text))
+        self.set_speech_service(
+            # RecorderService()
+            GTTSService(transcription_model='base')
+        )
+        toc = TOC(2)
 
-        colors = [RED, GREEN, RED, BLUE]
+        with self.voiceover(
+            """Hello and welcome to episode 3 in our series on Information Theory
+            Today we will extend the subject of the previous episode <bookmark mark='1'/>
+            to a case where there are multiple random events happening
+            and we will introduce new properties <bookmark mark='2'/>
+            joint entropy, conditional entropy and mutual information
+            """
+                            ) as trk:
+            self.play(Write(toc.header.next_to(toc.entries[0].main, UP, aligned_edge=LEFT)))
+            self.play(*[Write(e.main) for e in toc.entries])
+            self.wait_until_bookmark("1")
+            self.play(*[Unwrite(e.main) for e in toc.entries[3:]])
+            self.wait_until_bookmark("2")
+            self.play(toc.entries[2].open())
+        colors = [RED, GREEN, YELLOW, BLUE]
         shapes = [Square, Star, Triangle, Circle]
         
         combinations = [[True, True, True, False],
@@ -836,31 +844,40 @@ class TwoEventEntropy(Scene):
             t.get_horizontal_lines()[0].set_color(RED)
             return t
         t = make_table(combinations)
-        self.play(Create(t.scale(0.4)))
-        self.wait(2)
 
-        self.play(t.animate.become(t.copy().scale(0.4).shift(2*UP+4*RIGHT)))
-        self.wait(1)
+        with self.voiceover("""
+        Remember our example with picking a ball from a set of balls of different colors that we introduced in the previous episode?
+        We can expand on it, <bookmark mark='1'/> where now instead of just balls there are different shapes.
+        You can think of an outcome of picking from our bag as two events, one <bookmark mark='2'/> is picking a specific color, 
+        and the other one is <bookmark mark='3'/>picking a specific shape
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Transform(toc.get_open(2), t.scale(0.4), replace_mobject_with_target_in_scene=True))
+            self.wait_until_bookmark("2")
+            self.play(Indicate(t.get_row_labels()))
+            self.wait_until_bookmark("3")
+            self.play(Indicate(t.get_col_labels()))
+
+
 
         joint_entropy_formula = Tex("$H(X,Y) =$", "$-\\sum\\limits_{x,y} p(x,y) \cdot \log_2(p(x,y))$")
         entropy_x_formula = Tex("$H(X) =$", "$-\\sum\\limits_{x,y} p(x,y) \cdot \log_2(\\sum\\limits_{y} p(x,y))$")
         entropy_y_formula = Tex("$H(Y) =$", "$-\\sum\\limits_{x,y} p(x,y) \cdot \log_2(\\sum\\limits_{x} p(x,y))$")
         conditional_entropy_formula = Tex("$H(X|Y) =$", "$-\\sum\\limits_{x,y} p(x,y) \cdot \log_2\\left(\\frac{p(x,y)}{p(y)}\\right)$")
-        mutual_information_formula = Tex("$I(X;Y) = -\\sum\\limits_{x,y} p(x,y) \cdot \\log_2\\left(\\frac{p(x) \\cdot p(y)}{p(x,y)}\\right)$")
+        mutual_information_formula = Tex("$I(X;Y) = $", "$-\\sum\\limits_{x,y} p(x,y) \cdot \\log_2\\left(\\frac{p(x) \\cdot p(y)}{p(x,y)}\\right)$")
         
         formulas = VGroup(entropy_x_formula, entropy_y_formula, joint_entropy_formula, conditional_entropy_formula, mutual_information_formula)
         arranged_formulas = formulas.copy().scale(0.6).shift(3*UP+4*LEFT).arrange(DOWN, center=False, aligned_edge=LEFT)
 
         formulas[0].shift(UP + 2.5*LEFT)
 
-        self.play(Write(formulas[0]))
         self.wait(1)
 
         low_frac = 12#$np.sum(combinations)
         final_eq = VGroup(*[
                     Tex(f"$-\\frac{{3}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{3}}{{{low_frac}}})$", color=RED),
                     Tex(f"$-\\frac{{3}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{3}}{{{low_frac}}})$", color=GREEN),
-                    Tex(f"$-\\frac{{3}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{3}}{{{low_frac}}})$", color=RED),
+                    Tex(f"$-\\frac{{3}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{3}}{{{low_frac}}})$", color=YELLOW),
                     Tex(f"$-\\frac{{3}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{3}}{{{low_frac}}})$", color=BLUE)]).arrange(DOWN, center=False, aligned_edge=LEFT)
         
         interm_eq = VGroup(*[
@@ -868,68 +885,121 @@ class TwoEventEntropy(Scene):
                     Tex(f"$-\\frac{{1}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{3}}{{{low_frac}}})$", color=RED),
                     Tex(f"$-\\frac{{1}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{3}}{{{low_frac}}})$", color=RED)]).arrange(DOWN, center=False, aligned_edge=LEFT)
         
-        base_eq = Tex(f"$-\\frac{{1}}{{{low_frac}}}$", color=RED).move_to(final_eq[0].get_corner(LEFT), LEFT)
-        base_eq2 = Tex(f"$-\\frac{{1}}{{{low_frac}}}$", "$\log_2($", color=RED).move_to(final_eq[0].get_corner(LEFT), LEFT)
-        base_eq3 = Tex(f"$-\\frac{{1}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{1}}{{{low_frac}}}+\\frac{{1}}{{{low_frac}}}+\\frac{{1}}{{{low_frac}}})$", color=RED).move_to(final_eq[0].get_corner(LEFT), LEFT)
+        base_eq = Tex(f"$-\\frac{{1}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{1}}{{{low_frac}}}+\\frac{{1}}{{{low_frac}}}+\\frac{{1}}{{{low_frac}}})$", color=RED).move_to(final_eq[0].get_corner(LEFT), LEFT)
         
-        
-        self.play(Indicate(t.get_entries((2,2))))
-        current = t.get_entries((2,2)).copy()
-        self.play(Transform(current, base_eq))
-        self.wait(1)
-        self.play(Transform(current, base_eq2))
-        self.wait(1)
-        current = VGroup(*([current] + [t.get_entries(x).copy() for x in [(2,2), (2,3), (2,4)]]))
-        self.play(Transform(current, base_eq3))
-        self.wait(1)
-        self.play(Transform(current, interm_eq[0]))
-        i_eq = [current]
-        for i in range(2):
-            i_eq.append(t.get_entries((2,3+i)).copy())
-            self.play(Transform(i_eq[-1], interm_eq[1+i]))
-        i_eq = VGroup(*i_eq)
-        self.play(Transform(i_eq, final_eq[0]))
-        self.wait(1)
-        self.play(Transform(i_eq, final_eq))
-        self.wait(1)
+
+        with self.voiceover("""
+        Firstly, let's take a look at what happens to our equation for entropy <bookmark mark='1'/> now that there are two events in play 
+        it might look complex at first but let's write it out and see what we come to
+            """) as trk:
+            self.play(t.animate.become(t.copy().scale(0.4).shift(2*UP+4*RIGHT)))
+            self.wait_until_bookmark("1")
+            self.play(Write(formulas[0]))
+
+        with self.voiceover("""
+        We take the probability of a single event, let's say it's picking a<bookmark mark='1'/> red square
+         and we multiply it<bookmark mark='2'/> by the logarithm
+       <bookmark mark='3'/> of the sum of all probabilities of picking a red shape
+
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Indicate(t.get_entries((2,2))))
+            current = t.get_entries((2,2)).copy()
+            self.play(Transform(current, base_eq[0],replace_mobject_with_target_in_scene=True))
+            self.wait_until_bookmark("2")
+            self.play(Write(base_eq[1]))
+            self.wait_until_bookmark("3")
+            current = VGroup(*[t.get_entries(x).copy() for x in [(2,2), (2,3), (2,4)]])
+            self.play(Transform(current, base_eq[2],replace_mobject_with_target_in_scene=True))
+
+        self.play(Transform(base_eq, interm_eq[0], replace_mobject_with_target_in_scene=True))
+        with self.voiceover("""
+            We then do it for the rest of the red shapes and we sum the results
+            """) as trk:
+            for i in range(2):
+                self.play(Transform(t.get_entries((2,3+i)).copy(), interm_eq[1+i], replace_mobject_with_target_in_scene=True))
+            self.play(Transform(interm_eq, final_eq[0], replace_mobject_with_target_in_scene=True))
+
+        with self.voiceover("""
+        And we continue doing this for the<bookmark mark='1'/> green
+        <bookmark mark='2'/> yellow 
+        <bookmark mark='3'/> and blue shapes
+            """) as trk:
+            self.wait_until_bookmark("1")
+            current = VGroup(*[t.get_entries(x).copy() for x in [(3,2), (3,3), (3,4)]])
+            self.play(Transform(current, final_eq[1],replace_mobject_with_target_in_scene=True))
+            self.wait_until_bookmark("2")
+            current = VGroup(*[t.get_entries(x).copy() for x in [(4,2), (4,3), (4,4)]])
+            self.play(Transform(current, final_eq[2],replace_mobject_with_target_in_scene=True))
+            self.wait_until_bookmark("3")
+            current = VGroup(*[t.get_entries(x).copy() for x in [(5,2), (5,3), (5,4)]])
+            self.play(Transform(current, final_eq[3],replace_mobject_with_target_in_scene=True))
 
         old_formula = Tex("$H(X) =$", "$-\\sum\\limits_{x} p(x) \cdot \log_2\\left(p(x)\\right)$").move_to(formulas[0].get_corner(RIGHT), RIGHT)
         formulas[0].save_state()
-        self.play(formulas[0].animate.become(old_formula))
-        self.wait(1)
-        self.play(Restore(formulas[0]))
-        self.wait(1)
-        self.play(FadeOut(i_eq))
-        self.play(Transform(formulas[0], arranged_formulas[0]))
-        self.wait(1)
+
+        with self.voiceover("""
+        I've purposely did all of the calculations by color, so that the more alert viewers might notice that this is  
+        <bookmark mark='1'/> exactly the same formula as when we did it for one event only, <bookmark mark='2'/> except now we just
+        note that there are two possible events
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(formulas[0].animate.become(old_formula))
+            self.wait_until_bookmark("2")
+            self.play(Restore(formulas[0]))
+            self.wait(1)
+            self.play(FadeOut(final_eq))
+            self.play(Transform(formulas[0], arranged_formulas[0]))
+            self.wait(1)
 
 
-        self.play(Write(formulas[1]))
-        self.wait(1)
-        old_formula = Tex("$H(Y) =$", "$-\\sum\\limits_{y} p(y) \cdot \log_2\\left(p(y)\\right)$").move_to(formulas[1].get_corner(LEFT), LEFT)
-        formulas[1].save_state()
-        self.play(formulas[1].animate.become(old_formula))
-        self.wait(1)
-        self.play(Restore(formulas[1]))
-        self.wait(1)
-        self.play(Transform(formulas[1], arranged_formulas[1]))
-        self.wait(1)
+        with self.voiceover("""
+        We can do the same thing <bookmark mark='1'/>if we want to calculate the entropy of picking a specific shape
+        <bookmark mark='2'/>
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Write(formulas[1]))
+            old_formula = Tex("$H(Y) =$", "$-\\sum\\limits_{y} p(y) \cdot \log_2\\left(p(y)\\right)$").move_to(formulas[1].get_corner(LEFT), LEFT)
+            formulas[1].save_state()
+            self.wait_until_bookmark("2")
+            self.play(formulas[1].animate.become(old_formula))
+            self.wait(3)
+            self.play(Restore(formulas[1]))
+            self.wait(2)
+            self.play(Transform(formulas[1], arranged_formulas[1]))
 
-        self.play(Write(formulas[2]))
-        self.wait(1)
-        self.play(Transform(formulas[2], arranged_formulas[2]))
-        self.wait(1)
+
+        with self.voiceover("""
+        Let's now introduce the concept of<bookmark mark='1'/> a joint entropy
+        what it measures is just the entropy<bookmark mark='2'/> of all of the possible outcomes for both
+        of our events, think about it as treating all of the events as a one independent event, and calculating it`s entropy
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Write(formulas[2][0]))
+            self.wait_until_bookmark("2")
+            self.play(Write(formulas[2][1:]))
+            self.wait(1)
+            self.play(Transform(formulas[2], arranged_formulas[2]))
+            self.wait(1)
 
         formulas[3].shift(0.5*UP + 3*LEFT)
-        self.play(Write(formulas[3]))
-        new_formula = Tex("$H(X|Y) =$", "$-\\sum\\limits_{x,y} p(x,y) \cdot \log_2\\left(p(x|y)\\right)$").move_to(formulas[3].get_corner(LEFT), LEFT)
-        self.play(Transform(formulas[3], new_formula))
+
+        with self.voiceover("""
+        Another new concept is that of a conditional entropy, it calculates the uncertainty of <bookmark mark='1'/> one of our events,
+        given that<bookmark mark='2'/> we know the outcome of the other one 
+            """) as trk:
+            self.play(Write(formulas[3][0]))
+            self.wait_until_bookmark("1")
+            self.play(Write(formulas[3][1:]))
+            self.wait_until_bookmark("2")
+            new_formula = Tex("$H(X|Y) =$", "$-\\sum\\limits_{x,y} p(x,y) \cdot \log_2\\left(p(x|y)\\right)$").move_to(formulas[3].get_corner(LEFT), LEFT)
+            self.play(TransformMatchingTex(formulas[3], new_formula))
         self.wait(1)
         
         final_eq = VGroup(*[
                     Tex(f"$-\\frac{{3}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{1}}{{{3}}})$", color=RED),
                     Tex(f"$-\\frac{{3}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{1}}{{{3}}})$", color=GREEN),
-                    Tex(f"$-\\frac{{3}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{1}}{{{3}}})$", color=RED),
+                    Tex(f"$-\\frac{{3}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{1}}{{{3}}})$", color=YELLOW),
                     Tex(f"$-\\frac{{3}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{1}}{{{3}}})$", color=BLUE)]).arrange(DOWN, center=False, aligned_edge=LEFT)
         
         interm_eq = VGroup(*[
@@ -937,62 +1007,173 @@ class TwoEventEntropy(Scene):
                     Tex(f"$-\\frac{{1}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{1}}{{{3}}})$", color=RED),
                     Tex(f"$-\\frac{{1}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{1}}{{{3}}})$", color=RED)]).arrange(DOWN, center=False, aligned_edge=LEFT)
         
-        base_eq = Tex(f"$-\\frac{{1}}{{{low_frac}}}$", color=RED).move_to(final_eq[0].get_corner(LEFT), LEFT)
-        base_eq2 = Tex(f"$-\\frac{{1}}{{{low_frac}}}$", "$\log_2($", color=RED).move_to(final_eq[0].get_corner(LEFT), LEFT)
-        base_eq3 = Tex(f"$-\\frac{{1}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{1}}{{{3}}})$", color=RED).move_to(final_eq[0].get_corner(LEFT), LEFT)
+        base_eq = Tex(f"$-\\frac{{1}}{{{low_frac}}}$", "$\log_2($", f"$\\frac{{1}}{{{3}}})$", color=RED).move_to(final_eq[0].get_corner(LEFT), LEFT)
         
-
-        self.play(Indicate(t.get_entries((2,2))))
-        current = t.get_entries((2,2)).copy()
-        self.play(Transform(current, base_eq))
+        with self.voiceover("""
+        Let's say we want to calculate the uncertainty of a color, when we know what shape an object is
+            """) as trk:
+            pass
+        with self.voiceover("""
+        To do that, we take the probability of an outcome being a specific color and shape,<bookmark mark='1'/>
+        and we multiply it <bookmark mark='2'/> by a logarithm of the probability <bookmark mark='3'/>of it being a certain color 
+        when we know it's shape
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Indicate(t.get_entries((2,2))))
+            current = t.get_entries((2,2)).copy()
+            self.play(Transform(current, base_eq[0],replace_mobject_with_target_in_scene=True))
+            self.wait_until_bookmark("2")
+            self.play(Write(base_eq[1]))
+            self.wait_until_bookmark("3")
+            current = VGroup(*[t.get_entries(x).copy() for x in [(2,2), (2,3), (2,4)]])
+            self.play(Transform(current, base_eq[2],replace_mobject_with_target_in_scene=True))
         self.wait(1)
-        self.play(Transform(current, base_eq2))
+        with self.voiceover("""
+        And we do that for all of the possible shapes<bookmark mark='1'/> of that color
+        And for all of<bookmark mark='2'/> the possible colors
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Transform(base_eq, interm_eq[0], replace_mobject_with_target_in_scene=True))
+            for i in range(2):
+                self.play(Transform(t.get_entries((2,3+i)).copy(), interm_eq[1+i], replace_mobject_with_target_in_scene=True))
+            self.play(Transform(interm_eq, final_eq[0], replace_mobject_with_target_in_scene=True))
+            self.wait_until_bookmark("2")
+            self.play(Transform(interm_eq, final_eq[0], replace_mobject_with_target_in_scene=True))
+            current = VGroup(*[t.get_entries(x).copy() for x in [(3,2), (3,3), (3,4)]])
+            self.play(Transform(current, final_eq[1],replace_mobject_with_target_in_scene=True))
+            current = VGroup(*[t.get_entries(x).copy() for x in [(4,2), (4,3), (4,4)]])
+            self.play(Transform(current, final_eq[2],replace_mobject_with_target_in_scene=True))
+            current = VGroup(*[t.get_entries(x).copy() for x in [(5,2), (5,3), (5,4)]])
+            self.play(Transform(current, final_eq[3],replace_mobject_with_target_in_scene=True))
         self.wait(1)
-        current = VGroup(*([current] + [t.get_entries(x).copy() for x in [(2,2), (2,3), (2,4)]]))
-        self.play(Transform(current, base_eq3))
-        self.wait(1)
-        self.play(Transform(current, interm_eq[0]))
-        i_eq = [current]
-        for i in range(2):
-            i_eq.append(t.get_entries((2,3+i)).copy())
-            self.play(Transform(i_eq[-1], interm_eq[1+i]))
-        i_eq = VGroup(*i_eq)
-        self.play(Transform(i_eq, final_eq[0]))
-        self.wait(1)
-        self.play(Transform(i_eq, final_eq))
-        self.wait(1)
-        self.play(FadeOut(i_eq))
+        self.play(FadeOut(final_eq))
         self.play(Transform(formulas[3], arranged_formulas[3]))
         self.wait(1)
-        
-        self.play(Write(formulas[4]))
-        self.wait(1)
+        with self.voiceover("""
+        The last new concept that we will introduce today is that<bookmark mark='1'/>
+        of mutual information, what it tells us<bookmark mark='2'/> is how much information is shared 
+        between both of our events.
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Write(formulas[4][0]))
+            self.wait_until_bookmark("2")
+            self.play(Write(formulas[4][1]))
+        with self.voiceover("""
+        You can think about it this way, just as one bit of information means that we reduced our 
+        probability in half, one bit of mutual information, means that knowing the outcome of one event
+        eliminates half of the probability of the other one
+            """) as trk:
+            pass
         self.play(Transform(formulas[4], arranged_formulas[4]))
         self.wait(1)       
+        dependencies =VGroup(
+        Tex("$H(X,Y) \\leq H(X) + H(Y)$"),
+        Tex("$H(X,Y) = H(X) + H(Y|X)$"),
+        Tex("$H(X) \\geq H(X|Y)$"),
+        Tex("$I(X; Y) = H(Y) - H(Y|X)$"),
+        Tex("$I(X; Y) = H(Y) + H(X) - H(Y,X)$")
+        ).scale(0.6).arrange(DOWN, center=False, aligned_edge=LEFT, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER*2.1)\
+            .next_to(arranged_formulas, RIGHT, aligned_edge=UP).shift(2*RIGHT)
+        
+        with self.voiceover("""
+        there are also a few very important dependencies between the formulas for entropy
+            """) as trk:
+            self.play(t.animate.next_to(arranged_formulas, DOWN))
+        
+        with self.voiceover("""
+        Joint entropy <bookmark mark='1'/> is always lesser or equal to the sum of individual entropies for both events
+        It is also equal <bookmark mark='2'/>to the uncertainty of one event, increased by the uncertainty of the second one given that we know the first
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Write(dependencies[0]))
+            self.wait_until_bookmark("2")
+            self.play(Write(dependencies[1]))
+
+        with self.voiceover("""
+        Entropy of one of the events is always greater than or equal to the entropy of that event given that we know the other one
+            """) as trk:
+            self.play(Write(dependencies[2]))
+
+        with self.voiceover("""
+        Mutual information <bookmark mark='1'/> is how much our uncertainty of an event decreases when we find out the outcome of the other one
+        It is also equal <bookmark mark='2'/> to the cumulative uncertainty of both events individually reduced by the joint entropy
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Write(dependencies[3]))
+            self.wait_until_bookmark("2")
+            self.play(Write(dependencies[4]))
         def make_probs(combinations):
             num = np.sum(combinations)
             return np.array([[float(x)/num for x in y] for y in combinations])
         ebr = EntropyBoxRepresentation(make_probs(combinations))
-        self.play(Create(ebr.set_scale(0.4).whole.shift(DOWN+3*RIGHT)))
-        self.wait(1)
-        combinations = [[i==j for i in range(4)]for j in range(4)]
-        self.play(Transform(t, make_table(combinations).scale(0.4 * 0.4).shift(2*UP+4*RIGHT)))
-        self.wait(1)
-        ebr.update(self, make_probs(combinations))
+        
+        with self.voiceover("""
+        This also has a nice visual representation that might help you get an intuitive feeling
+        for the relation between entropies
+            """) as trk:
+            self.play(Create(ebr.set_scale(0.4).whole.next_to(t, RIGHT, aligned_edge=UP).shift(3*RIGHT)))
         self.wait(1)
 
-        combinations = [[True for i in range(4)] for j in range(4)]
-        self.play(Transform(t, make_table(combinations).scale(0.4 * 0.4).shift(2*UP+4*RIGHT)))
-        self.wait(1)
-        ebr.update(self, make_probs(combinations))
-        self.wait(1)
+        with self.voiceover("""
+        Right now I'm going to show you two special cases to further improve your intuition, but before that 
+        I encourage you to pause the video, and think about when will<bookmark mark='1'/> Joint entropy be exactly equal to the sum of individual entropies,
+        and when will Entropy of one of the events<bookmark mark='2'/> be exactly equal to the conditional entropy of that event given the second one
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Indicate(dependencies[0]))
+            self.wait_until_bookmark("2")
+            self.play(Indicate(dependencies[2]))
+
+        with self.voiceover("""
+        the first special case is when both events have a deterministic relationship<bookmark mark='1'/>
+        meaning that knowing one event tells us everything about the other <bookmark mark='2'/>
+            """) as trk:
+            combinations = [[i==j for i in range(4)]for j in range(4)]
+            self.wait_until_bookmark("1")
+            self.play(Transform(t, make_table(combinations).scale(0.4 * 0.4).move_to(t)))
+            self.wait_until_bookmark("2")
+            ebr.update(self, make_probs(combinations))
+
+        with self.voiceover("""
+        In this case, conditional entropy is equal to 0 because there is no uncertainty about the event if we know
+        the outcome of the second one. Mutual information is equal to the entropies of the other variables, since knowing
+        one event tells us everything about the other one
+            """) as trk:
+            pass
+        with self.voiceover("""
+        The second special case is when both events are independent<bookmark mark='1'/>
+        meaning that knowing one event tells us nothing about the other <bookmark mark='2'/>
+            """) as trk:
+            combinations = [[True for i in range(4)] for j in range(4)]
+            self.wait_until_bookmark("1")
+            self.play(Transform(t, make_table(combinations).scale(0.4 * 0.4).move_to(t).shift(1.3*LEFT+0.4*DOWN)))
+            self.wait_until_bookmark("2")
+            ebr.update(self, make_probs(combinations))
+        with self.voiceover("""
+        This is exactly the case that I encouraged you to think about earlier, there is no mutual information since knowing the color
+        does not reduce the probabilities of shapes, conditional entropy is equal to the entropy of an event since 
+        knowing one event is not reducing our uncertainty. And Joint entropy is equal to the sum of individual entropies.
+            """) as trk:
+            pass
+            
+        self.play(FadeOut(t, formulas, dependencies, ebr.whole))
+        toc = TOC(2)
+        with self.voiceover("""
+        We have come to the end of the second episode  <bookmark mark='1'/>
+        This was a lot of information to parse but hopefully you now have an intuitive feeling
+        <bookmark mark='2'/> of multiple event entropy
+        If you want to test yourself event further I encourage you to think about - or perhaps
+        event write out on paper the exact outcomes of all the entropies for our two special cases
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Write(toc.header.next_to(toc.entries[0].main, UP, aligned_edge=LEFT)))
+            self.play(*[Write(e.main) for e in toc.entries])
+            self.wait_until_bookmark("2")
+            self.play(toc.entries[2].main.animate.set_color(GREEN))
+        self.wait(2)
+        self.play(FadeOut(toc.header, *[e.main for e in toc.entries]))
+        self.wait(2)
         
-        joint_entropy_update = Tex("$H(X,Y) \\leq H(X) + H(Y)$")
-        Tex("$H(X,Y) = H(X) + H(Y|X)$")
-        Tex("$H(X) + H(Y) \\geq H(X,Y)$")
-        Tex("$H(X) \\geq H(X|Y)$")
-        Tex("$I(X; Y) = H(Y) - H(Y|X)$")
-        Tex("$I(X; Y) = H(Y) + H(X) - H(Y,X)$")
 def make_probs(p,q):
     return [[q * p, q * (1-p)],
             [(1-q) * (1-p), (1-q) * p]]
@@ -1961,7 +2142,7 @@ class Entry:
 
 
 class TOC:
-    def __init__(self):
+    def __init__(self, episode = 0):
         self.header = Tex("Information Theory", font_size=85)
 
         information_content = Entry("1. Information", ["What is information?", "How do we measure information?"]) 
@@ -1976,6 +2157,13 @@ class TOC:
 
         for i in range(1, len(self.entries)):
             self.entries[i].main.next_to(self.entries[i-1].main, DOWN, aligned_edge=LEFT)
+        for i in range(episode):
+            self.entries[i].main.set_color(GREEN)
+
+    def get_open(self, episode):
+        return VGroup(self.header, *[self.entries[i].main for i in range(episode+1)], self.entries[episode].list)
+
+
 
 class TableOfContents(VoiceoverScene):
     def construct(self):
