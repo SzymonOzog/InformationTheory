@@ -5,68 +5,114 @@ from entropy import *
 from random import random 
 
 
-class CommunicationSystem(Scene):
+class CommunicationSystem(VoiceoverScene):
     def construct(self):
+
+        self.set_speech_service(
+            # RecorderService()
+            GTTSService(transcription_model='base')
+        )
+        toc = TOC(3)
+
+        with self.voiceover(
+            """Hello and welcome to episode 4 in our series on Information Theory
+            In this episode we will talk about <bookmark mark='1'/> a communication system
+            and more specifically <bookmark mark='2'/>
+            We will create a blueprint for our communication system, we will show an example of a 
+            binary symmetric channel and analyze it 
+            """
+                            ) as trk:
+            self.play(Write(toc.header.next_to(toc.entries[0].main, UP, aligned_edge=LEFT)))
+            self.play(*[Write(e.main) for e in toc.entries])
+            self.wait_until_bookmark("1")
+            self.play(*[Unwrite(e.main) for e in toc.entries[4:]])
+            self.wait_until_bookmark("2")
+            self.play(toc.entries[3].open())
         source = Square()
         source.add(Text("Information\nSource", font_size=20,))
-        self.play(Create(source))
-        self.wait(1)
-        self.play(source.animate.shift(LEFT*3))
         
         transmitter = Square()
         transmitter.add(Text("Transmitter", font_size=20))
-        s_to_t = Arrow(source.get_right(), transmitter.get_left(), buff=0, max_stroke_width_to_length_ratio=1)
-        self.play(Create(transmitter))
-        self.play(Create(s_to_t))
         
-        group = Group(source, s_to_t, transmitter)
-        self.play(group.animate.shift(LEFT*3))
 
         channel = Square()
         channel.add(Text("Channel", font_size=20))
-        self.play(Create(Arrow(transmitter.get_right(), channel.get_left(), buff=0, max_stroke_width_to_length_ratio=1)))
-        self.play(Create(channel))
 
         receiver = Square()
         receiver.add(Text("Receiver", font_size=20))
         receiver.shift(RIGHT*3)
-        self.play(Create(Arrow(channel.get_right(), receiver.get_left(), buff=0, max_stroke_width_to_length_ratio=1)))
-        self.play(Create(receiver))
         self.wait(1)
         
         destination = Square()
         destination.add(Text("Destination", font_size=20))
         destination.shift(RIGHT*6)
-        self.play(Create(Arrow(receiver.get_right(), destination.get_left(), buff=0, max_stroke_width_to_length_ratio=1)))
-        self.play(Create(destination))
         self.wait(1)
-
-        for x in self.mobjects:
-            self.play(x.animate.set_color(GREEN))
 
         noise = Square(color=RED)
         noise.add(Text("Noise", font_size=20, color=RED))
         noise.shift(DOWN*3)
-        self.play(Create(noise))
-        self.play(Create(Arrow( noise.get_top(), channel.get_bottom(), buff=0, max_stroke_width_to_length_ratio=1, color=RED)))
 
-        for x in [channel, receiver, destination]:
-            self.play(x.animate.set_color(YELLOW))
         
         self.wait(1)
 
 
+
+        with self.voiceover("""
+        Our blueprint for a communication system <bookmark mark='1'/>starts with a source, it produces information,
+        and passes it to the <bookmark mark='2'/> transmitter, whose job is to send it via <bookmark mark='3'/>a channel
+        to <bookmark mark='4'/> the receiver that further passes the information <bookmark mark='5'/> to the destination
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Transform(toc.get_open(3), source,replace_mobject_with_target_in_scene=True))
+            self.wait_until_bookmark("2")
+            self.play(source.animate.shift(LEFT*3))
+            self.play(Create(transmitter))
+            s_to_t = Arrow(source.get_right(), transmitter.get_left(), buff=0, max_stroke_width_to_length_ratio=1)
+            self.play(Create(s_to_t))
+            self.wait_until_bookmark("3")
+            group = Group(source, s_to_t, transmitter)
+            self.play(group.animate.shift(LEFT*3))
+            self.play(Create(Arrow(transmitter.get_right(), channel.get_left(), buff=0, max_stroke_width_to_length_ratio=1)))
+            self.play(Create(channel))
+            self.wait_until_bookmark("4")
+            self.play(Create(Arrow(channel.get_right(), receiver.get_left(), buff=0, max_stroke_width_to_length_ratio=1)))
+            self.play(Create(receiver))
+            self.wait_until_bookmark("5")
+            self.play(Create(Arrow(receiver.get_right(), destination.get_left(), buff=0, max_stroke_width_to_length_ratio=1)))
+            self.play(Create(destination))
+
+
+        with self.voiceover("""
+        This is a case known as a noiseless channel,<bookmark mark='1'/>where there message is unchanged across all of the
+        steps along it's way
+            """) as trk:
+            self.wait_until_bookmark("1")
+            for x in self.mobjects:
+                self.play(x.animate.set_color(GREEN))
+
         encoding = Text("Encoding", font_size=20, color=GREEN).next_to(transmitter.submobjects[0], DOWN)
         encoding_box = SurroundingRectangle(encoding, color=GREEN)
-        transmitter.add(encoding)
         decoding = Text("Decoding", font_size=20, color=GREEN).next_to(receiver.submobjects[0], DOWN)
         decoding_box = SurroundingRectangle(decoding, color=GREEN)
-        receiver.add(decoding)
-        self.play(Create(encoding), Create(decoding),
-                  Create(encoding_box), Create(decoding_box))
 
-        for x in [receiver, destination]:
-            self.play(x.animate.set_color(GREEN))
+        with self.voiceover("""We will end with
+        But most often our channel is not perfect and there is <bookmark mark='1'/> noise acting on it,
+        that partially corrupts our message. The job of the transmitter and the receiver <bookmark mark='2'/>is to encode and decode
+        said information in a way <bookmark mark='3'/>that reduces the amount of corruption introduced by the noise
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Create(noise))
+            self.play(Create(Arrow( noise.get_top(), channel.get_bottom(), buff=0, max_stroke_width_to_length_ratio=1, color=RED)))
+            for x in [channel, receiver, destination]:
+                self.play(x.animate.set_color(YELLOW))
+            self.wait_until_bookmark("2")
+            self.play(Create(encoding), Create(decoding),
+                    Create(encoding_box), Create(decoding_box))
+            self.wait_until_bookmark("3")
+            for x in [receiver, destination]:
+                self.play(x.animate.set_color(GREEN))
+        self.play(FadeOut(*[o for o in self.mobjects]))
+        self.wait(1)
 
 def to_binary(i, len):
     return bin(i)[2:].zfill(len)
