@@ -72,13 +72,16 @@ class CommunicationSystem(VoiceoverScene):
             self.wait_until_bookmark("3")
             group = Group(source, s_to_t, transmitter)
             self.play(group.animate.shift(LEFT*3))
-            self.play(Create(Arrow(transmitter.get_right(), channel.get_left(), buff=0, max_stroke_width_to_length_ratio=1)))
+            t_to_c = Arrow(transmitter.get_right(), channel.get_left(), buff=0, max_stroke_width_to_length_ratio=1)
+            self.play(Create(t_to_c))
             self.play(Create(channel))
             self.wait_until_bookmark("4")
-            self.play(Create(Arrow(channel.get_right(), receiver.get_left(), buff=0, max_stroke_width_to_length_ratio=1)))
+            c_to_r = Arrow(channel.get_right(), receiver.get_left(), buff=0, max_stroke_width_to_length_ratio=1)
+            self.play(Create(c_to_r))
             self.play(Create(receiver))
             self.wait_until_bookmark("5")
-            self.play(Create(Arrow(receiver.get_right(), destination.get_left(), buff=0, max_stroke_width_to_length_ratio=1)))
+            r_to_d = Arrow(receiver.get_right(), destination.get_left(), buff=0, max_stroke_width_to_length_ratio=1)
+            self.play(Create(r_to_d))
             self.play(Create(destination))
 
 
@@ -102,7 +105,8 @@ class CommunicationSystem(VoiceoverScene):
             """) as trk:
             self.wait_until_bookmark("1")
             self.play(Create(noise))
-            self.play(Create(Arrow( noise.get_top(), channel.get_bottom(), buff=0, max_stroke_width_to_length_ratio=1, color=RED)))
+            n_to_c = Arrow( noise.get_top(), channel.get_bottom(), buff=0, max_stroke_width_to_length_ratio=1, color=RED)
+            self.play(Create(n_to_c))
             for x in [channel, receiver, destination]:
                 self.play(x.animate.set_color(YELLOW))
             self.wait_until_bookmark("2")
@@ -111,7 +115,71 @@ class CommunicationSystem(VoiceoverScene):
             self.wait_until_bookmark("3")
             for x in [receiver, destination]:
                 self.play(x.animate.set_color(GREEN))
-        self.play(FadeOut(*[o for o in self.mobjects]))
+        # self.play(FadeOut(*[o for o in self.mobjects]))
+        self.wait(1)
+
+        title = Tex("Binary Symmetric Channel").scale(1.5).shift(3.2*UP)
+        with self.voiceover("""
+        Let' go over an example and introduce <bookmark mark='1'/> the Binary Symmetric Channel
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Write(title))
+
+        bsc = BSC()
+        with self.voiceover("""
+        Our transmitter will be sending <bookmark mark='1'/> binary digits, that will be passed down to <bookmark mark='2'/>the receiver 
+        and our channel will send our bit with a <bookmark mark='3'/>probability of p and flip it with a probability of 1 minus p
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Transform(VGroup(transmitter, t_to_c, s_to_t, encoding, encoding_box), VGroup(*bsc.bits[:2], *bsc.texts[:2]), replace_mobject_with_target_in_scene=True))
+            self.wait_until_bookmark("2")
+            self.play(Transform(VGroup(receiver, c_to_r, r_to_d, decoding, decoding_box), VGroup(*bsc.bits[2:], *bsc.texts[2:]), replace_mobject_with_target_in_scene=True))
+            self.wait_until_bookmark("3")
+            self.play(Transform(VGroup(channel, noise, n_to_c), VGroup(*bsc.arrows, *bsc.labels), replace_mobject_with_target_in_scene=True))
+
+        input_string = "001000101"
+        flips = [False] * len(input_string)
+        flips[0] = True
+        flips[1] = True
+        flips[2] = True
+        flips[3] = True
+        flips[8] = True
+
+        input_text = [Tex(bit).next_to(source, DOWN, aligned_edge=RIGHT).scale(0.7).shift((0.2*i)*LEFT) for i, bit in enumerate(reversed(input_string))]
+        
+        with self.voiceover("""
+        Let's say that we want to transmit this <bookmark mark='1'/> sequence of bits through our channel
+            """) as trk:
+            for t in reversed(input_text):
+                self.play(Write(t))
+        
+        
+        with self.voiceover("""
+        We just go over every bit in the input sequence and pass it into our channel, it then it flips some of the bits with a certain probability
+        and sends some of the bits unchanged
+            """) as trk:
+            for i,(bit, text, flip) in enumerate(zip(input_string, input_text, flips)):
+                source = bsc.input_bit_0.get_center() if bit == "0" else bsc.input_bit_1.get_center()
+                if bit == "0":
+                    target = bsc.output_bit_1.get_center() if flip else bsc.output_bit_0.get_center()  
+                else:
+                    target = bsc.output_bit_0.get_center() if flip else bsc.output_bit_1.get_center()
+                resulting_bit = "0" if (target == bsc.output_bit_0.get_center()).all() else "1"
+
+                self.play(FadeOut(text.copy(), target_position=source))
+
+                def animate(arrow): self.play(ShowPassingFlash(arrow.copy().set_color(BLUE), time_width=0.2))
+                if resulting_bit == "0" and bit == "0":
+                    animate(bsc.arrow_00)
+                elif resulting_bit == "1" and bit == "0":
+                    animate(bsc.arrow_01)
+                elif resulting_bit == "0" and bit == "1":
+                    animate(bsc.arrow_10)
+                else:
+                    animate(bsc.arrow_11)
+
+                result = Tex(resulting_bit, color=GREEN if resulting_bit == bit else RED).scale(0.7).next_to(destination, DOWN, aligned_edge=LEFT).shift((0.2*i)*RIGHT)
+                self.play(FadeIn(result, target_position=target))
         self.wait(1)
 
 def to_binary(i, len):
@@ -484,7 +552,7 @@ class BSC():
 
 
 
-class BinarySymmetricChannel(Scene):
+class BinarySymmetricChannel(VoiceoverScene):
     def construct(self):
         title = Tex("Binary Symmetric Channel").scale(1.5)
         self.play(Write(title))
