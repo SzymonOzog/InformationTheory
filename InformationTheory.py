@@ -1,7 +1,7 @@
-from manim import *
+from manim import * #NOQA
 from manim_voiceover import VoiceoverScene
 from manim_voiceover.services.recorder import RecorderService
-from entropy import *
+from entropy import * #NOQA
 from random import random 
 
 
@@ -150,23 +150,25 @@ class CommunicationSystem(VoiceoverScene):
         with self.voiceover("""
         Let's say that we want to transmit this <bookmark mark='1'/> sequence of bits through our channel
             """) as trk:
+            self.wait_until_bookmark("1")
             for t in reversed(input_text):
                 self.play(Write(t))
         
         
+        results = []
         with self.voiceover("""
         We just go over every bit in the input sequence and pass it into our channel, it then it flips some of the bits with a certain probability
         and sends some of the bits unchanged
             """) as trk:
             for i,(bit, text, flip) in enumerate(zip(input_string, input_text, flips)):
-                source = bsc.input_bit_0.get_center() if bit == "0" else bsc.input_bit_1.get_center()
+                src = bsc.input_bit_0.get_center() if bit == "0" else bsc.input_bit_1.get_center()
                 if bit == "0":
                     target = bsc.output_bit_1.get_center() if flip else bsc.output_bit_0.get_center()  
                 else:
                     target = bsc.output_bit_0.get_center() if flip else bsc.output_bit_1.get_center()
                 resulting_bit = "0" if (target == bsc.output_bit_0.get_center()).all() else "1"
 
-                self.play(FadeOut(text.copy(), target_position=source))
+                self.play(FadeOut(text.copy(), target_position=src))
 
                 def animate(arrow): self.play(ShowPassingFlash(arrow.copy().set_color(BLUE), time_width=0.2))
                 if resulting_bit == "0" and bit == "0":
@@ -180,7 +182,221 @@ class CommunicationSystem(VoiceoverScene):
 
                 result = Tex(resulting_bit, color=GREEN if resulting_bit == bit else RED).scale(0.7).next_to(destination, DOWN, aligned_edge=LEFT).shift((0.2*i)*RIGHT)
                 self.play(FadeIn(result, target_position=target))
+                results.append(result)
+        source_arrows = VGroup(Arrow(source.get_right(), bsc.input_bit_0.get_left(), buff=0.25, max_stroke_width_to_length_ratio=2, max_tip_length_to_length_ratio=0.1),
+                            Arrow(source.get_right(), bsc.input_bit_1.get_left(), buff=0.25, max_stroke_width_to_length_ratio=2, max_tip_length_to_length_ratio=0.1))
+        with self.voiceover("""
+        We can now perform an analysis of that channel,  imagine that instead of a predetermined<bookmark mark='1'/> message, we send bits 0 
+        with a certain probablility q and we send 1 otherwise
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Transform(VGroup(*input_text), VGroup(source_arrows, bsc.q_label, bsc.one_minus_q_label), replace_mobject_with_target_in_scene=True))
+
+
+        q = 0.5
+        p = 0.9
+        pr = make_probs(p,q)
+        joint_entropy_formula = Tex("$H(X,Y) =$", "$-\\sum\\limits_{x,y} p(x,y) \cdot \log_2(p(x,y))$")
+        entropy_x_formula = Tex("$H(X) =$", "$-\\sum\\limits_{x,y} p(x,y) \cdot \log_2(\\sum\\limits_{y} p(x,y))$")
+        entropy_y_formula = Tex("$H(Y) =$", "$-\\sum\\limits_{x,y} p(x,y) \cdot \log_2(\\sum\\limits_{x} p(x,y))$")
+        conditional_entropy_formula = Tex("$H(X|Y) =$", "$-\\sum\\limits_{x,y} p(x,y) \cdot \log_2\\left(\\frac{p(x,y)}{p(y)}\\right)$")
+        conditional_entropy_formula2 = Tex("$H(Y|X) =$", "$-\\sum\\limits_{x,y} p(x,y) \cdot \log_2\\left(\\frac{p(x,y)}{p(x)}\\right)$")
+        mutual_information_formula = Tex("$I(X;Y) = $", "$-\\sum\\limits_{x,y} p(x,y) \cdot \\log_2\\left(\\frac{p(x) \\cdot p(y)}{p(x,y)}\\right)$")
+        
+        formulas = VGroup(entropy_x_formula, entropy_y_formula, joint_entropy_formula, conditional_entropy_formula, conditional_entropy_formula2, mutual_information_formula)
+
+        bsc_and_source = VGroup(bsc.full_channel, source, source_arrows)
+        q_tr = ValueTracker(q)
+        p_tr = ValueTracker(p)
+
+        def make_prob_table(contents):
+            l = Line(0.5*UP+LEFT, 0.5*DOWN+RIGHT)
+            x = Tex("X").next_to(l, DOWN+LEFT).shift(0.5*UP+RIGHT)
+            y = Tex("Y").next_to(l, UP+RIGHT).shift(0.5*DOWN+LEFT)
+            t = Table(contents, 
+                           row_labels=[Text("0"), Text("1")], 
+                           col_labels=[Text("0"), Text("1")], 
+                           v_buff=0.9, h_buff=1.1,
+                           top_left_entry=VGroup(l,x,y)).scale(0.4).next_to(q_text, UP)
+            c = [GREEN, RED, RED, GREEN]
+            ent = t.get_entries_without_labels()
+            for i in range(len(c)):
+                ent[i].set_color(c[i])
+            return t
+
+        pr = make_probs(p,q)
+
+
+        p_text = Tex("$p=$", f"${p_tr.get_value()}$").add_updater(lambda x: x.become(Tex("$p=$",f"${p_tr.get_value():.2f}$"), match_center=True))
+        q_text = Tex("$q=$", f"${q_tr.get_value()}$").add_updater(lambda x: x.become(Tex("$q=$",f"${q_tr.get_value():.2f}$"), match_center=True))
+        with self.voiceover("""
+        Let's start by giving values <bookmark mark='1'/> to our probabilities for generating and flipping bits.
+        When we have them we can create a table <bookmark mark='2'/> that contains information about all possible combinations
+        of sent and recieved bits
+            """) as trk:
+            self.play(FadeOut(title, destination,*results))
+            self.play(bsc_and_source.animate.scale(0.5).shift(2*DOWN+3.5*RIGHT))
+            formulas.scale(0.5).next_to(bsc_and_source, LEFT, aligned_edge=UP).shift(1.2*UP+0.5*LEFT).arrange(DOWN, center=False, aligned_edge=LEFT)
+            self.wait_until_bookmark("1")
+            p_text.next_to(bsc.full_channel, UP)
+            q_text.next_to(p_text, UP)
+            self.play(Write(p_text), Write(q_text))
+            self.wait_until_bookmark("2")
+            prob_table = make_prob_table([["",""],["",""]])
+            self.play(Create(prob_table))
         self.wait(1)
+
+        with self.voiceover("""
+        The probability of sending and recieving a value of 0 will be <bookmark mark='1'/>the probability of generating 0
+        multiplied by the probability of not flipping that bit. Similarly the probability of sending 0 and receiving 1
+        <bookmark mark='2'/>is the probability of generating 0 times the probability of flipping a bit
+        and the same<bookmark mark='3'/> applies when we send 1 
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Transform(prob_table, make_prob_table([["p*q",""],["",""]])))
+            self.wait_until_bookmark("2")
+            self.play(Transform(prob_table, make_prob_table([["p*q","(1-p)*q"],["",""]])))
+            self.wait_until_bookmark("3")
+            self.play(Transform(prob_table, make_prob_table([["p*q","(1-p)*q"],["(1-q)*p",""]])))
+            self.play(Transform(prob_table, make_prob_table([["p*q","(1-p)*q"],["(1-q)*p","(1-q)*(1-p)"]])))
+
+        self.wait(1)
+        with self.voiceover("""
+        we can now plug in the values for p and q to get the final probabilities
+            """) as trk:
+            self.play(Transform(prob_table, make_prob_table([[f"{p}*{q}","(1-p)*q"],["(1-q)*p","(1-q)*(1-p)"]])))
+            self.wait(1)
+            self.play(Transform(prob_table, make_prob_table([[f"{p}*{q}",f"(1-{p})*{q}"],[f"(1-q)*p","(1-q)*(1-p)"]])))
+            self.wait(1)
+            self.play(Transform(prob_table, make_prob_table([[f"{p}*{q}",f"(1-{p})*{q}"],[f"(1-{q})*{p}","(1-q)*(1-p)"]])))
+            self.wait(1)
+            self.play(Transform(prob_table, make_prob_table([[f"{p}*{q}",f"(1-{p})*{q}"],[f"(1-{q})*{p}",f"(1-{q})*(1-{p})"]])))
+            self.wait(1)
+            self.play(Transform(prob_table, make_prob_table([["0.45", "0.05"], ["0.05", "0.45"]])))
+
+        prob_table.add_updater(lambda x: x.become(
+            make_prob_table(probs_to_str(make_probs(p_tr.get_value(), q_tr.get_value()))), match_center=True))
+
+            
+        joint_entropy_formula_update = MathTex("H(X,Y) =", *[f"-{x:.2f}\cdot log_2({x:.2f})" + ('\\\\' if i == 1 and j == 0 else '') for j, row in enumerate(pr) for i, x in enumerate(row)])
+        joint_entropy_formula_update.scale(0.5).move_to(joint_entropy_formula, aligned_edge=LEFT)
+        for i,c in enumerate([GREEN, RED, RED, GREEN]):
+            joint_entropy_formula_update[1+i].set_color(c)
+        with self.voiceover("""
+        Let's write out our entropy formulas<bookmark mark='1'/>, we can now place<bookmark mark='2'/> our values in the equations
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Write(formulas))
+            self.wait_until_bookmark("2")
+            self.play(Transform(joint_entropy_formula[0], joint_entropy_formula_update[0],replace_mobject_with_target_in_scene=True))
+            self.play(Transform(VGroup(joint_entropy_formula[1], prob_table.get_entries((2,2)).copy()), joint_entropy_formula_update[1],replace_mobject_with_target_in_scene=True))
+            self.wait(1)
+            self.play(Transform(VGroup(prob_table.get_entries((2,3)).copy()), joint_entropy_formula_update[2],replace_mobject_with_target_in_scene=True))
+            self.wait(1)
+            self.play(Transform(VGroup(prob_table.get_entries((3,2)).copy()), joint_entropy_formula_update[3],replace_mobject_with_target_in_scene=True))
+            self.wait(1)
+            self.play(Transform(VGroup(prob_table.get_entries((3,3)).copy()), joint_entropy_formula_update[4],replace_mobject_with_target_in_scene=True))
+        
+        ebr = EntropyBoxRepresentation(make_probs(p,q))
+        ebr.set_scale(0.5).whole.next_to(formulas,UP)
+        joint_entropy_formula = joint_entropy_formula_update
+
+        with self.voiceover("""
+        I won't write out all of the equations by hand to save you some time, but I encourage everyone watching to do this yourself
+        for practice purposes, here are the values <bookmark mark='1'/>that come out 
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(joint_entropy_formula.animate.become(Tex("$H(X,Y) =$", f"{HXY(make_probs(p_tr.get_value(), q_tr.get_value())):.2f}").scale(0.5).move_to(joint_entropy_formula, aligned_edge=LEFT)))
+            self.play(entropy_x_formula.animate.become(Tex("$H(X) =$", f"{HX(make_probs(p_tr.get_value(), q_tr.get_value())):.2f}").scale(0.5).move_to(entropy_x_formula, aligned_edge=LEFT)))
+            self.play(entropy_y_formula.animate.become(Tex("$H(Y) =$", f"{HY(make_probs(p_tr.get_value(), q_tr.get_value())):.2f}").scale(0.5).move_to(entropy_y_formula, aligned_edge=LEFT)))
+            self.play(conditional_entropy_formula.animate.become(Tex("$H(X|Y) =$", f"{HX_g_Y(make_probs(p_tr.get_value(), q_tr.get_value())):.2f}").scale(0.5).move_to(conditional_entropy_formula, aligned_edge=LEFT)))
+            self.play(conditional_entropy_formula2.animate.become(Tex("$H(Y|X) =$", f"{HY_g_X(make_probs(p_tr.get_value(), q_tr.get_value())):.2f}").scale(0.5).move_to(conditional_entropy_formula2, aligned_edge=LEFT)))
+            self.play(mutual_information_formula.animate.become(Tex("$I(X;Y) =$", f"{I(make_probs(p_tr.get_value(), q_tr.get_value())):.2f}").scale(0.5).move_to(mutual_information_formula, aligned_edge=LEFT)))
+
+
+        with self.voiceover("""
+        Let's also bring out our nice visual representation
+            """) as trk:
+            self.play(Create(ebr.whole))
+
+        self.wait(1)
+
+        with self.voiceover("""
+        I will now tweak the values for both p and q, but before this happens, please pause the video and think for yourself
+        how will that affect all of the entropies? Do you know what to change to maximize mutual information?
+            """) as trk:
+            pass
+        
+        joint_entropy_formula.add_updater(lambda x: x.become(
+            Tex("$H(X,Y) =$", f"{HXY(make_probs(p_tr.get_value(), q_tr.get_value())):.2f}").scale(0.5).move_to(joint_entropy_formula, aligned_edge=LEFT)
+        ))
+        entropy_x_formula.add_updater(lambda x: x.become(
+            Tex("$H(X) =$", f"{HX(make_probs(p_tr.get_value(), q_tr.get_value())):.2f}").scale(0.5).move_to(entropy_x_formula, aligned_edge=LEFT)
+        ))
+        entropy_y_formula.add_updater(lambda x: x.become(
+            Tex("$H(Y) =$", f"{HY(make_probs(p_tr.get_value(), q_tr.get_value())):.2f}").scale(0.5).move_to(entropy_y_formula, aligned_edge=LEFT)
+        ))
+        conditional_entropy_formula.add_updater(lambda x: x.become(
+            Tex("$H(X|Y) =$", f"{HX_g_Y(make_probs(p_tr.get_value(), q_tr.get_value())):.2f}").scale(0.5).move_to(conditional_entropy_formula, aligned_edge=LEFT)
+        ))
+        conditional_entropy_formula2.add_updater(lambda x: x.become(
+            Tex("$H(Y|X) =$", f"{HY_g_X(make_probs(p_tr.get_value(), q_tr.get_value())):.2f}").scale(0.5).move_to(conditional_entropy_formula2, aligned_edge=LEFT)
+        ))
+        mutual_information_formula.add_updater(lambda x: x.become(
+            Tex("$I(X;Y) =$", f"{I(make_probs(p_tr.get_value(), q_tr.get_value())):.2f}").scale(0.5).move_to(mutual_information_formula, aligned_edge=LEFT)
+        ))
+        with self.voiceover("""
+        First let's see what happens when we change the value for p, <bookmark mark='1'/> if we start biasing toward some value in our inputs, the entropy starts decreasing
+        just as expected, <bookmark mark='2'/>, if we go all the way and just send only 0's the entropy of the input goes to 0, but there is still a bit of 
+        uncertainty about the output since the bit can get flipped. Note how the entropy of the input given that we know the output is also 0 since no matter if the bit is flipped or not
+        we can be certain that it was generated by sending a 0.
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(q_tr.animate.set_value(0.7))
+            ebr.update(self, np.array(make_probs(p_tr.get_value(), q_tr.get_value())))
+            self.wait_until_bookmark("2")
+            self.play(q_tr.animate.set_value(1))
+            ebr.update(self, np.array(make_probs(p_tr.get_value(), q_tr.get_value())))
+
+        self.wait(1)
+        self.play(q_tr.animate.set_value(0.5))
+        ebr.update(self, np.array(make_probs(p_tr.get_value(), q_tr.get_value())))
+        self.wait(1)
+
+        with self.voiceover("""
+        When we increase the flip probability,<bookmark mark='1'/> the uncertainty of the input given that we know the output is decreasing, 
+        if we start flipping<bookmark mark='2'/> with a probability of 0.5, we maximize uncertainty, and get to the state where there is no mutual information
+        this is because we end up sending random outcomes that do not depend on our input
+        Similarly, when we reduce our flip probability<bookmark mark='3'/> to 0, we are absolutely certain about the input when we receive our bit
+        and mutual information is maximized
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(p_tr.animate.set_value(0.7))
+            ebr.update(self, np.array(make_probs(p_tr.get_value(), q_tr.get_value())))
+            self.wait_until_bookmark("2")
+            self.play(p_tr.animate.set_value(0.5))
+            ebr.update(self, np.array(make_probs(p_tr.get_value(), q_tr.get_value())))
+            self.wait_until_bookmark("3")
+            self.play(p_tr.animate.set_value(1))
+            ebr.update(self, np.array(make_probs(p_tr.get_value(), q_tr.get_value())))
+
+        
+        self.play(*[FadeOut(x) for x in self.mobjects])
+
+        toc = TOC(3)
+        with self.voiceover("""
+        Here is where we will end this<bookmark mark='1'/> episode, right now we have all 
+        the tools <bookmark mark='2'/> needed to get to the most exciting parts of information theory
+        so make sure that you understand all of them and stay tuned for the next episode.
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Write(toc.header.next_to(toc.entries[0].main, UP, aligned_edge=LEFT)))
+            self.play(*[Write(e.main) for e in toc.entries])
+            self.wait_until_bookmark("2")
+            self.play(toc.entries[3].main.animate.set_color(GREEN))
+        self.wait(2)
+        self.play(FadeOut(toc.header, *[e.main for e in toc.entries]))
+        self.wait(2)
 
 def to_binary(i, len):
     return bin(i)[2:].zfill(len)
@@ -548,58 +764,6 @@ class BSC():
         self.labels = VGroup(self.p_label0, self.one_minus_p_label0, self.one_minus_p_label1, self.p_label1)
         self.q_labels = VGroup(self.q_label, self.one_minus_q_label)
         self.full_channel = VGroup(self.bits, self.texts, self.arrows, self.labels, self.q_labels)
-
-
-
-
-class BinarySymmetricChannel(VoiceoverScene):
-    def construct(self):
-        title = Tex("Binary Symmetric Channel").scale(1.5)
-        self.play(Write(title))
-        self.wait(1)
-        self.play(FadeOut(title))
-
-        bsc = BSC()
-        self.play(Create(bsc.bits), Write(bsc.texts))
-        self.wait(1)
-        
-        
-        self.play(Create(bsc.arrows[:2]), Write(bsc.labels[:2]))
-        self.wait(1)
-
-        self.play(Create(bsc.arrows[2:]), Write(bsc.labels[2:]))
-        self.wait(1)
-
-        input_string = "1000101"
-        input_text = [Tex(bit).shift((5-0.3*i)*LEFT) for i, bit in enumerate(input_string)]
-        
-        for t in input_text:
-            self.play(Write(t))
-
-        for i,( bit, text) in enumerate(zip(input_string, input_text)):
-            source = bsc.input_bit_0.get_center() if bit == "0" else bsc.input_bit_1.get_center()
-            prob = np.random.rand()
-            FLIP_PROB = 0.1
-            if bit == "0":
-                target = bsc.output_bit_1.get_center() if prob < FLIP_PROB else bsc.output_bit_0.get_center()  
-            else:
-                target = bsc.output_bit_0.get_center() if prob < FLIP_PROB else bsc.output_bit_1.get_center()
-            resulting_bit = "0" if (target == bsc.output_bit_0.get_center()).all() else "1"
-
-            self.play(FadeOut(text.copy(), target_position=source))
-
-            def animate(arrow): self.play(ShowPassingFlash(arrow.copy().set_color(BLUE)))
-            if resulting_bit == "0" and bit == "0":
-                animate(bsc.arrow_00)
-            elif resulting_bit == "1" and bit == "0":
-                animate(bsc.arrow_01)
-            elif resulting_bit == "0" and bit == "1":
-                animate(bsc.arrow_10)
-            else:
-                animate(bsc.arrow_11)
-
-            result = Tex(resulting_bit, color=GREEN if resulting_bit == bit else RED).move_to((4+0.3*i)*RIGHT)
-            self.play(FadeIn(result, target_position=target))
 
 
 class Entropy(VoiceoverScene):
@@ -1295,80 +1459,6 @@ def make_probs(p,q):
 def probs_to_str(pr):
     return [[f"{x:.2f}" for x in y]for y in pr]
 
-class BSCAnalysis(Scene):
-    def construct(self):
-        bsc = BSC()
-        bsc.full_channel.scale(0.5).shift(DOWN+0.5*LEFT)
-        self.play(Create(bsc.full_channel[:4]))
-        self.wait(1)
-
-        self.play(Create(bsc.q_label))
-        self.wait(2)
-        self.play(Create(bsc.one_minus_q_label))
-
-
-        q = 0.5
-        p = 0.9
-        ebr = EntropyBoxRepresentation(make_probs(p,q))
-        ebr.set_scale(0.5).whole.shift(2*UP+2*RIGHT)
-        self.play(Create(ebr.boxes), Write(ebr.labels))
-        
-        self.wait(2)
-
-        q_tr = ValueTracker(q)
-        p_tr = ValueTracker(p)
-
-
-        p_text = Tex("$p=$", f"${p_tr.get_value()}$").add_updater(lambda x: x.become(Tex("$p=$",f"${p_tr.get_value():.2f}$"), match_center=True)).shift(DOWN+5*LEFT)
-        q_text = Tex("$q=$", f"${q_tr.get_value()}$").add_updater(lambda x: x.become(Tex("$q=$",f"${q_tr.get_value():.2f}$"), match_center=True)).shift(1.5*DOWN+5*LEFT)
-        self.play(Write(p_text), Write(q_text))
-        self.wait(1)
-        pr = make_probs(p,q)
-
-        def make_prob_table(contents):
-            l = Line(0.5*UP+LEFT, 0.5*DOWN+RIGHT)
-            x = Tex("X").next_to(l, DOWN+LEFT).shift(0.5*UP+RIGHT)
-            y = Tex("Y").next_to(l, UP+RIGHT).shift(0.5*DOWN+LEFT)
-            t = Table(contents, 
-                           row_labels=[Text("0"), Text("1")], 
-                           col_labels=[Text("0"), Text("1")], 
-                           v_buff=0.9, h_buff=1.1,
-                           top_left_entry=VGroup(l,x,y)).scale(0.4).shift(1.5*UP+3.5*LEFT)
-            c = [GREEN, RED, RED, GREEN]
-            ent = t.get_entries_without_labels()
-            for i in range(len(c)):
-                ent[i].set_color(c[i])
-            return t
-
-        prob_table = make_prob_table([["",""],["",""]])
-        
-        str_probs = probs_to_str(pr)
-        self.play(Create(prob_table))
-        self.wait(1)
-        self.play(Transform(prob_table, make_prob_table([["p*q",""],["",""]])))
-        self.wait(1)
-        self.play(Transform(prob_table, make_prob_table([["p*q","(1-p)*q"],["",""]])))
-        self.wait(1)
-        self.play(Transform(prob_table, make_prob_table([["p*q","(1-p)*q"],["(1-q)*p",""]])))
-        self.wait(1)
-        self.play(Transform(prob_table, make_prob_table([["p*q","(1-p)*q"],["(1-q)*p","(1-q)*(1-p)"]])))
-        self.wait(1)
-        self.play(Transform(prob_table, make_prob_table([[f"{p}*{q}","(1-p)*q"],["(1-q)*p","(1-q)*(1-p)"]])))
-        self.wait(1)
-        self.play(Transform(prob_table, make_prob_table([[f"{p}*{q}",f"(1-{p})*{q}"],[f"(1-q)*p","(1-q)*(1-p)"]])))
-        self.wait(1)
-        self.play(Transform(prob_table, make_prob_table([[f"{p}*{q}",f"(1-{p})*{q}"],[f"(1-{q})*{p}","(1-q)*(1-p)"]])))
-        self.wait(1)
-        self.play(Transform(prob_table, make_prob_table([[f"{p}*{q}",f"(1-{p})*{q}"],[f"(1-{q})*{p}",f"(1-{q})*(1-{p})"]])))
-        self.wait(1)
-        self.play(Transform(prob_table, make_prob_table([["0.45", "0.05"], ["0.05", "0.45"]])))
-
-        prob_table.add_updater(lambda x: x.become(
-            make_prob_table(probs_to_str(make_probs(p_tr.get_value(), q_tr.get_value()))), match_center=True))
-
-        self.play(q_tr.animate.set_value(0.6))
-        ebr.update(self, np.array(make_probs(p_tr.get_value(), q_tr.get_value())))
-        self.wait(2)
 
 class NoislessChanelTheorem(MovingCameraScene):
     def construct(self):
