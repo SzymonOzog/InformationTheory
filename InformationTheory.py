@@ -7,7 +7,6 @@ from random import random
 
 class CommunicationSystem(VoiceoverScene):
     def construct(self):
-
         self.set_speech_service(
             # RecorderService()
             GTTSService(transcription_model='base')
@@ -1460,12 +1459,28 @@ def probs_to_str(pr):
     return [[f"{x:.2f}" for x in y]for y in pr]
 
 
-class NoislessChanelTheorem(MovingCameraScene):
+class NoiselessChannelTheorem(VoiceoverScene, MovingCameraScene):
     def construct(self):
-        title = Text("THE FUNDAMENTAL THEOREM \n     FOR A NOISLESS CHANNEL")
-        self.play(Write(title))
-        self.wait(1)
-        self.play(FadeOut(title))
+
+        self.set_speech_service(
+            # RecorderService()
+            GTTSService(transcription_model='base')
+        )
+        toc = TOC(3)
+
+        with self.voiceover(
+            """Hello and welcome to the fifth episode in our series on Information Theory
+            Today we will talk about the fundamental theorem <bookmark mark='1'/> for a noiseless channel
+            and we will introduce <bookmark mark='2'/> a concept of a channel capacity, as well as describe
+            the ways of efficiently encoding information sent through our channel
+            """
+                            ) as trk:
+            self.play(Write(toc.header.next_to(toc.entries[0].main, UP, aligned_edge=LEFT)))
+            self.play(*[Write(e.main) for e in toc.entries])
+            self.wait_until_bookmark("1")
+            self.play(*[Unwrite(e.main) for e in toc.entries[4:]])
+            self.wait_until_bookmark("2")
+            self.play(toc.entries[4].open())
 
         communication_system = VGroup() 
         source = Square()
@@ -1486,75 +1501,122 @@ class NoislessChanelTheorem(MovingCameraScene):
         channel = Square()
         channel.add(Text("Channel", font_size=20))
         communication_system.add(Arrow(transmitter.get_right(), channel.get_left(), buff=0, max_stroke_width_to_length_ratio=1))
-        communication_system.add(channel)
 
         receiver = Square()
         receiver.add(Text("Receiver", font_size=20))
         receiver.shift(RIGHT*3)
         communication_system.add(Arrow(channel.get_right(), receiver.get_left(), buff=0, max_stroke_width_to_length_ratio=1))
         communication_system.add(receiver)
-        self.wait(1)
         
         destination = Square()
         destination.add(Text("Destination", font_size=20))
         destination.shift(RIGHT*6)
         communication_system.add(Arrow(receiver.get_right(), destination.get_left(), buff=0, max_stroke_width_to_length_ratio=1))
         communication_system.add(destination)
-        self.wait(1)
 
-        self.play(Create(communication_system))
-        self.wait(1)
+        with self.voiceover("""
+        Let's get back to our <bookmark mark='1'/>communication system, and focus on the source<bookmark mark='2'/>
+        and the channel.
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Transform(toc.get_open(4), communication_system))
+            self.add(source, channel)
+            communication_system.remove(source, channel)
+            self.wait_until_bookmark("2")
+            self.play(FadeOut(communication_system))
+            self.play(source.animate.shift(3*RIGHT), channel.animate.shift(3*RIGHT))
         
-        self.add(source, channel)
-        communication_system.remove(source, channel)
-        self.wait(1)
-        self.play(FadeOut(communication_system))
-        self.play(source.animate.shift(3*RIGHT), channel.animate.shift(3*RIGHT))
-        self.wait(1)
-        
-        entropy = Tex("$H$").next_to(source, DOWN)
-        self.play(Write(entropy))
         self.wait(1)
 
-        capacity = Tex("$C =  \\lim_{T \\to \\infty} \\frac{N(T)}{T}$").next_to(channel, DOWN)
-        self.play(Write(capacity))
-        self.wait(1)
+        with self.voiceover("""
+        As you might remember from our previous episodes, our source<bookmark mark='1'/>
+        can be described by it's entropy - this tells us how much information it produces
+            """) as trk:
+            entropy = Tex("$H$").next_to(source, DOWN)
+            self.play(Write(entropy))
 
-        self.play(FadeOut(source, entropy))
-        self.play(capacity.animate.shift(3*LEFT), channel.animate.shift(3*LEFT))
-        self.wait(1)
 
-        for i in range(1):
-            random_binary = "".join(["0" if random() > 0.5 else "1" for i in range(5)])
-            sent_message = Tex(random_binary).next_to(channel, LEFT).shift(LEFT)
-            recieved_message = sent_message.copy().next_to(channel, RIGHT).shift(RIGHT)
-            self.play(Write(sent_message))
-            self.play(FadeOut(sent_message, target_position=channel.get_left()))
-            # self.play(ApplyWave(channel, direction=RIGHT, time_width=0.2, amplitude=0.1))
-            self.play(FadeIn(recieved_message, target_position=channel.get_right()))
-            self.play(FadeOut(recieved_message))
+        with self.voiceover("""
+        The way that we can describe our channel, is by it's capacity<bookmark mark='1'/> C which tells us how many
+        bits we<bookmark mark='2'/> can send each second. It's given by this formula<bookmark mark='3'/> where T is the
+        duration of our signals and N is the number of allowed signals of duration T
+            """) as trk:
+            capacity = Tex("$C$", "$=\\lim_{T \\to \\infty} \\frac{N(T)}{T}$").next_to(channel, DOWN)
+            self.play(Write(capacity))
+            self.play(Transform(capacity, Tex("$C$", "$=\\frac{bits}{second}$").move_to(capacity, aligned_edge=LEFT)))
+            self.play(Transform(capacity, Tex("$C$", "$=\\lim_{T \\to \\infty} \\frac{\\log(N(T))}{T}$").move_to(capacity, aligned_edge=LEFT)))
+            self.wait(1)
+
+        with self.voiceover("""
+            This essentially means, that we <bookmark mark='1'/> send messages through our channel, over and over again
+            we take the information content that we sent and divide it by the time it took, giving us information per second of our <bookmark mark='2'/>channel
+            """) as trk:
+            self.play(FadeOut(source, entropy))
+            self.play(capacity.animate.shift(3*LEFT), channel.animate.shift(3*LEFT))
+
+            self.wait_until_bookmark("1")
+            run_time = 0.5
+            while trk.time_until_bookmark("2") > 0:
+                random_binary = "".join(["0" if random() > 0.5 else "1" for i in range(5)])
+                sent_message = Tex(random_binary).next_to(channel, LEFT).shift(LEFT)
+                recieved_message = sent_message.copy().next_to(channel, RIGHT).shift(RIGHT)
+                self.play(Write(sent_message, run_time=run_time))
+                self.play(FadeOut(sent_message, target_position=channel.get_left(), run_time=run_time))
+                self.play(FadeIn(recieved_message, target_position=channel.get_right(), run_time=run_time))
+                self.play(FadeOut(recieved_message, run_time=run_time))
+                run_time*=0.8
             
         self.play(capacity.animate.shift(3*RIGHT), channel.animate.shift(3*RIGHT))
         self.play(FadeIn(source, entropy), Transform(capacity, Tex("$C$").next_to(channel, DOWN)))
         self.wait(1)
 
-        possible_rate = Tex("$Rate = \\frac{C}{H} - \\epsilon$")
-        self.play(Write(possible_rate))
-        self.wait(1)
+        with self.voiceover("""
+        What the fundamental theorem for a noiseless channel tells us is that we can
+        send messages through our channel<bookmark mark='1'/> with a rate that's very close
+        to the capacity of our channel divided by the entropy of our source. Epsilon here is just 
+        a very small number that indicates that the outcome is a little bit smaller than our fraction.
+            """) as trk:
+            possible_rate = Tex("$Rate = \\frac{C}{H} - \\epsilon$")
+            self.play(Write(possible_rate))
+            self.wait(1)
 
-        self.play(Transform(capacity, Tex("$C=2\\frac{bits}{s}$").next_to(channel, DOWN)))
-        self.play(self.camera.frame.animate.scale(1.3))
+        with self.voiceover("""
+        Take a moment to think how beautiful and logical this outcome is. Remember, the capacity<bookmark mark='1'/> is how much information we can send in a second
+        and the entropy tells us how much information we expect<bookmark mark='2'/> from one symbol produced by our source. Divide them and that gives<bookmark mark='3'/> us the 
+        number of symbols that we can send in a second
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Transform(possible_rate, Tex("$Rate = \\frac{C}{H} - \\epsilon$", "$=\\frac{\\frac{bits}{s}}{H}$").move_to(possible_rate, aligned_edge=LEFT)))
+            self.wait_until_bookmark("2")
+            self.play(Transform(possible_rate, Tex("$Rate = \\frac{C}{H} - \\epsilon$", "$=\\frac{\\frac{bits}{s}}{\\frac{bits}{symbol}}$").move_to(possible_rate, aligned_edge=LEFT)))
+            self.wait_until_bookmark("3")
+            self.play(Transform(possible_rate, Tex("$Rate = \\frac{C}{H} - \\epsilon$", "$=\\frac{symbol}{s}$").move_to(possible_rate, aligned_edge=LEFT)))
+
         weather_conditions = VGroup(*[Text(x) for x in ["Sunny", "Rainy","Cloudy","Snowy","Windy","Stormy","Foggy","Drizzle"]])
         weather_conditions.arrange(DOWN, aligned_edge=LEFT).shift(6*LEFT).scale(0.6)
-
         probabilities = [0.6,0.05,0.2,0.01,0.05,0.01,0.03,0.05]
 
-        self.play(Write(weather_conditions))
-        self.wait(1)
-
-        encodings = VGroup(*[Tex(x).scale(0.6).next_to(weather_conditions[i]) for i, x in enumerate(create_binary_digits(3))])
-        self.play(Write(encodings))
-        self.wait(1)
+        with self.voiceover("""
+        To show you how important this theorem is, imagine this scenario. You are resting in a tavern and a man runs in
+        saying that they have a high paying job at a local weather station. They have a channel <bookmark mark='1'/>that can send 2 bits a second
+        and they need someone to help them transmit weather data from one station to another.
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Transform(capacity, Tex("$C=2\\frac{bits}{s}$").next_to(channel, DOWN)))
+        
+        with self.voiceover("""
+        You can hear everyone around you saying easy and getting up to take the job. But the weather man tells you the conditions.
+        <bookmark mark='1'/> there are 8 possible weather conditions. And we need to send 10000 states in 10000 seconds. 
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(self.camera.frame.animate.scale(1.3))
+            self.play(Write(weather_conditions))
+        with self.voiceover("""
+        Everyone quicly does the math in their heads <bookmark mark='1'/> and screams that it's not possible. One symbol requires 
+        3 bits to encode and the channel capacity is only 2 bits. But you know better.
+            """) as trk:
+            encodings = VGroup(*[Tex(x).scale(0.6).next_to(weather_conditions[i]) for i, x in enumerate(create_binary_digits(3))])
+            self.play(Write(encodings))
         
         def update_entropy(current_entropy, additional=None): 
             equality = '=' if current_entropy == 0 else '\\approxeq'
@@ -1563,58 +1625,110 @@ class NoislessChanelTheorem(MovingCameraScene):
                 old.add(additional)
             self.play(Transform(old, Tex(f"$H{equality}{current_entropy:.2f}$").next_to(source, DOWN)))
         current_entropy = 0
-        update_entropy(current_entropy)
+        entropy_text = Tex("$H(X)=\\sum\\limits_{x}$","$p(x)$", "$\\cdot \\log_2($", "$\\frac{1}{p(x)}$", "$)$").shift(2*UP)
+
+        with self.voiceover("""
+        You approach the man and tell him that it might be possible to send that data, but first
+        you have too take a quick look at it and calculate<bookmark mark='1'/> it's entropy
+            """) as trk:
+            self.wait_until_bookmark("1")
+            update_entropy(current_entropy)
+            self.play(Write(entropy_text))
 
         written_probs = VGroup(*[Tex(str(x)).scale(0.6).next_to(weather_conditions[i], LEFT)  for i,x in enumerate(probabilities)])
-        self.play(Write(written_probs))
-        self.wait(1)
+        with self.voiceover("""
+        Going into the weather station, you notice that indeed, just as you expected - there are weather states <bookmark mark='1'/>that are much more probable
+        than other ones, so you quickly <bookmark mark='2'/> go over all of them and calculate the entropy
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Write(written_probs))
+            self.wait_until_bookmark("2")
+            def transform_entropy(p): 
+                self.play(entropy_text.animate.become(Tex("$H(X)=\\sum\\limits_{x}$",f"${p}$", "$\\cdot \\log_2($", f"$\\frac{{1}}{{{p}}}$", "$)$").shift(2*UP)))
+            for i,p in enumerate(probabilities):
+                self.play(written_probs[i].animate.set_color(GREEN))
+                self.play(FadeOut(written_probs[i].copy(), target_position=entropy_text.get_center()))
+                transform_entropy(p)
 
-        entropy_text = Tex("$H(X)=\\sum\\limits_{x}$","$p(x)$", "$\\cdot \\log_2($", "$\\frac{1}{p(x)}$", "$)$").shift(2*UP)
-        self.play(Write(entropy_text))
-        self.wait(1)
+                partial = p*math.log2(1/p)
+                current_entropy+=(partial)
+                partial_text=Tex(f"$\\approxeq{partial:.2f}$").next_to(entropy_text)
+                self.play(Write(partial_text))
+                update_entropy(current_entropy, partial_text)
         
-        def transform_entropy(p): 
-            self.play(entropy_text.animate.become(Tex("$H(X)=\\sum\\limits_{x}$",f"${p}$", "$\\cdot \\log_2($", f"$\\frac{{1}}{{{p}}}$", "$)$").shift(2*UP)))
-        for i,p in enumerate(probabilities):
-            self.play(written_probs[i].animate.set_color(GREEN))
-            self.play(FadeOut(written_probs[i].copy(), target_position=entropy_text.get_center()))
-            transform_entropy(p)
-
-            partial = p*math.log2(1/p)
-            current_entropy+=(partial)
-            partial_text=Tex(f"$\\approxeq{partial:.2f}$").next_to(entropy_text)
-            self.play(Write(partial_text))
-            update_entropy(current_entropy, partial_text)
-        
-        self.play(Transform(possible_rate, Tex(f"$Rate = \\frac{{2}}{{{current_entropy:.2f}}} - \\epsilon$")))
-        self.play(Transform(possible_rate, Tex(f"$Rate \\approxeq {(2/current_entropy):.2f}$")))
+        with self.voiceover("""
+        You then use you outcome to calculate the possible rate <bookmark mark='1'/>at which you can send that information
+        and it turns out that it's <bookmark mark='2'/> greater than one so you can send more than one symbol per second and 
+        get the payment for that job. The only question now is - how do you do this?
+            """) as trk:
+            self.play(Transform(possible_rate, Tex(f"$Rate = \\frac{{2}}{{{current_entropy:.2f}}} - \\epsilon$")))
+            self.play(Transform(possible_rate, Tex(f"$Rate \\approxeq {(2/current_entropy):.2f}$")))
 
         huffman_codings = [Tex(c).scale(0.6).next_to(weather_conditions[i]) for i,c in enumerate(["0", "1100", "10", "111000", "1101", "111001", "11101", "1111"])]
-        self.play(*[Transform(e,h) for e,h in zip(encodings, huffman_codings)])
-        self.wait(1)
 
-        average_length = Tex("$L=$", "$\\sum p(x) \\cdot length(x)$").next_to(possible_rate, 7*DOWN)
-        self.play(Write(average_length))
-        length_formulas = VGroup()
-        lengths = []
+        with self.voiceover("""
+        And the answer is - encoding. Let's say that instead of the current encodings for our states, you change them to this<bookmark mark='1'/>
+        ones, that have 2 properties, firstly they make more probable messages have shorter lengths and less probable ones longer, and secondly
+        no message is a prefix of another one so there is only one way to decode the sequence of messages.
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(*[Transform(e,h) for e,h in zip(encodings, huffman_codings)])
 
-        for i, c in enumerate(["0", "1100", "10", "111000", "1101", "111001", "11101", "1111"]):
-            length_formulas.add(Tex(f'${probabilities[i]} * {len(c)}{"" if i == 7 else " + "}$'))
-            lengths.append(probabilities[i] * len(c))
+        with self.voiceover("""
+        The codes below are called huffman codes, I won't go into much detail on how to generate them because there is already a magnificent
+        video by Reducible on the subject that I will link in the description for those interested
+            """) as trk:
+            pass
 
-        length_formulas.arrange_in_grid(2,4).next_to(average_length, DOWN)
+        with self.voiceover("""
+        The expected length of our message will the sum over all possible states, that multiplies the probability of <bookmark mark='1'/> sending that state
+        multiplied by the length of the message required to send it. <bookmark mark='2'/> We go over all of the states and calculate what is the average
+        length of our message after changing  the encoding
+            """) as trk:
+            average_length = Tex("$L=$", "$\\sum p(x) \\cdot length(x)$").next_to(possible_rate, 7*DOWN)
+            self.play(Write(average_length))
+            length_formulas = VGroup()
+            lengths = []
+            for i, c in enumerate(["0", "1100", "10", "111000", "1101", "111001", "11101", "1111"]):
+                length_formulas.add(Tex(f'${probabilities[i]} * {len(c)}{"" if i == 7 else " + "}$'))
+                lengths.append(probabilities[i] * len(c))
+            length_formulas.arrange_in_grid(2,4).next_to(average_length, DOWN)
+            for i in range(len(probabilities)):
+                self.play(Transform(VGroup(encodings[i].copy(), written_probs[i].copy()), length_formulas[i], replace_mobject_with_target_in_scene=True))
 
-        self.wait(1)
-        for i in range(len(probabilities)):
-            self.play(Transform(VGroup(encodings[i].copy(), written_probs[i].copy()), length_formulas[i]))
-        self.wait(1)
+        with self.voiceover("""
+        And it turns out, that our average length is now 1.87, which is very close to our entropy that described the amount of information - meaning
+        that we are very close to perfect compression. To calculate the rate at which we can send our data now <bookmark mark='1'/>we divide the capacity by our new message length
+        giving us a rate <bookmark mark='2'/>greater than one message per second. 
+            """) as trk:
+            self.play(Transform(VGroup(average_length, length_formulas),Tex("$L=$", f"${sum(lengths)}$").next_to(possible_rate, DOWN) ))
+            self.wait_until_bookmark("1")
+            current_rate = Tex("$R=$", "$\\frac{C}{L}$").next_to(possible_rate, UP)
+            self.play(Create(current_rate))
+            self.wait_until_bookmark("2")
+            self.play(Transform(current_rate, Tex("$R=$", f"${(2/sum(lengths)):.2f}$").move_to(current_rate, aligned_edge=LEFT)))
 
-        self.play(Transform(VGroup(average_length, length_formulas),Tex("$L=$", f"${sum(lengths)}$").next_to(possible_rate, DOWN) ))
-        self.wait(1)
-        self.play(Transform(possible_rate, Tex("$R=$", "$\\frac{C}{L}$")))
-        self.wait(1)
-        self.play(Transform(possible_rate, Tex("$R=$", f"${(2/sum(lengths)):.2f}$")))
-        self.wait(1)
+        with self.voiceover("""
+        And just like that, you managed to solve the problem that a lot of people would claim to be impossible
+            """) as trk:
+            pass
+
+        self.play(*[FadeOut(x) for x in self.mobjects])
+
+        toc = TOC(4)
+        with self.voiceover("""
+        With that we come to an end <bookmark mark='1'/>of another episode. 
+        Hopefully you now see how useful information theory can be and you appreciate
+        the beauty <bookmark mark='2'/> of the fundamental theorem for the noiseless channel.
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Write(toc.header.next_to(toc.entries[0].main, UP, aligned_edge=LEFT)))
+            self.play(*[Write(e.main) for e in toc.entries])
+            self.wait_until_bookmark("2")
+            self.play(toc.entries[4].main.animate.set_color(GREEN))
+        self.wait(2)
+        self.play(FadeOut(toc.header, *[e.main for e in toc.entries]))
+        self.wait(2)
 
 class NoisyChannelTheorem(ZoomedScene):
     def __init__(self, *args, **kwargs):
