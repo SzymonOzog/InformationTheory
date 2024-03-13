@@ -1470,7 +1470,8 @@ class NoiselessChannelTheorem(VoiceoverScene, MovingCameraScene):
 
         with self.voiceover(
             """Hello and welcome to the fifth episode in our series on Information Theory
-            Today we will talk about the fundamental theorem <bookmark mark='1'/> for a noiseless channel
+            Today we will talk about the fundamental theorem <bookmark mark='1'/> for a noiseless channel, also known 
+            as the source coding theorem
             and we will introduce <bookmark mark='2'/> a concept of a channel capacity, as well as describe
             the ways of efficiently encoding information sent through our channel
             """
@@ -1478,7 +1479,7 @@ class NoiselessChannelTheorem(VoiceoverScene, MovingCameraScene):
             self.play(Write(toc.header.next_to(toc.entries[0].main, UP, aligned_edge=LEFT)))
             self.play(*[Write(e.main) for e in toc.entries])
             self.wait_until_bookmark("1")
-            self.play(*[Unwrite(e.main) for e in toc.entries[4:]])
+            self.play(*[Unwrite(e.main) for e in toc.entries[5:]])
             self.wait_until_bookmark("2")
             self.play(toc.entries[4].open())
 
@@ -1501,6 +1502,7 @@ class NoiselessChannelTheorem(VoiceoverScene, MovingCameraScene):
         channel = Square()
         channel.add(Text("Channel", font_size=20))
         communication_system.add(Arrow(transmitter.get_right(), channel.get_left(), buff=0, max_stroke_width_to_length_ratio=1))
+        communication_system.add(channel)
 
         receiver = Square()
         receiver.add(Text("Receiver", font_size=20))
@@ -1519,7 +1521,7 @@ class NoiselessChannelTheorem(VoiceoverScene, MovingCameraScene):
         and the channel.
             """) as trk:
             self.wait_until_bookmark("1")
-            self.play(Transform(toc.get_open(4), communication_system))
+            self.play(Transform(toc.get_open(4), communication_system, replace_mobject_with_target_in_scene=True))
             self.add(source, channel)
             communication_system.remove(source, channel)
             self.wait_until_bookmark("2")
@@ -1532,24 +1534,28 @@ class NoiselessChannelTheorem(VoiceoverScene, MovingCameraScene):
         As you might remember from our previous episodes, our source<bookmark mark='1'/>
         can be described by it's entropy - this tells us how much information it produces
             """) as trk:
+            self.wait_until_bookmark("1")
             entropy = Tex("$H$").next_to(source, DOWN)
             self.play(Write(entropy))
 
 
         with self.voiceover("""
-        The way that we can describe our channel, is by it's capacity<bookmark mark='1'/> C which tells us how many
-        bits we<bookmark mark='2'/> can send each second. It's given by this formula<bookmark mark='3'/> where T is the
+        The way that we can describe our channel, is by it's capacity<bookmark mark='1'/> C which tells us how <bookmark mark='2'/>many
+        bits we can send each second. It's given by this formula<bookmark mark='3'/> in which T is the
         duration of our signals and N is the number of allowed signals of duration T
             """) as trk:
-            capacity = Tex("$C$", "$=\\lim_{T \\to \\infty} \\frac{N(T)}{T}$").next_to(channel, DOWN)
+            capacity = Tex("$C$").next_to(channel, DOWN)
+            self.wait_until_bookmark("1")
             self.play(Write(capacity))
-            self.play(Transform(capacity, Tex("$C$", "$=\\frac{bits}{second}$").move_to(capacity, aligned_edge=LEFT)))
-            self.play(Transform(capacity, Tex("$C$", "$=\\lim_{T \\to \\infty} \\frac{\\log(N(T))}{T}$").move_to(capacity, aligned_edge=LEFT)))
+            self.wait_until_bookmark("2")
+            self.play(Transform(capacity, Tex("$C$", "$=\\frac{bits}{second}$").next_to(channel, DOWN)))
+            self.wait_until_bookmark("3")
+            self.play(Transform(capacity, Tex("$C$", "$\\displaystyle{=\\lim_{T \\to \\infty} \\frac{\\log N(T)}{T}}$").next_to(channel, DOWN)))
             self.wait(1)
 
         with self.voiceover("""
-            This essentially means, that we <bookmark mark='1'/> send messages through our channel, over and over again
-            we take the information content that we sent and divide it by the time it took, giving us information per second of our <bookmark mark='2'/>channel
+            This essentially means, that we<bookmark mark='1'/> calculate it by sending messages through our channel, over and over again for a long time, then 
+            we  <bookmark mark='2'/> take the information content that we sent and divide it by the time it took, giving us information per second of our channel
             """) as trk:
             self.play(FadeOut(source, entropy))
             self.play(capacity.animate.shift(3*LEFT), channel.animate.shift(3*LEFT))
@@ -1564,7 +1570,7 @@ class NoiselessChannelTheorem(VoiceoverScene, MovingCameraScene):
                 self.play(FadeOut(sent_message, target_position=channel.get_left(), run_time=run_time))
                 self.play(FadeIn(recieved_message, target_position=channel.get_right(), run_time=run_time))
                 self.play(FadeOut(recieved_message, run_time=run_time))
-                run_time*=0.8
+                run_time*=0.9
             
         self.play(capacity.animate.shift(3*RIGHT), channel.animate.shift(3*RIGHT))
         self.play(FadeIn(source, entropy), Transform(capacity, Tex("$C$").next_to(channel, DOWN)))
@@ -1576,21 +1582,22 @@ class NoiselessChannelTheorem(VoiceoverScene, MovingCameraScene):
         to the capacity of our channel divided by the entropy of our source. Epsilon here is just 
         a very small number that indicates that the outcome is a little bit smaller than our fraction.
             """) as trk:
-            possible_rate = Tex("$Rate = \\frac{C}{H} - \\epsilon$")
+            possible_rate = MathTex("Rate = \\frac{C}{H}", "- \\epsilon")
+            self.wait_until_bookmark("1")
             self.play(Write(possible_rate))
             self.wait(1)
 
         with self.voiceover("""
-        Take a moment to think how beautiful and logical this outcome is. Remember, the capacity<bookmark mark='1'/> is how much information we can send in a second
+        Take a moment to think how beautiful and logical this outcome is. Remember that, the capacity<bookmark mark='1'/> is how much information we can send in a second
         and the entropy tells us how much information we expect<bookmark mark='2'/> from one symbol produced by our source. Divide them and that gives<bookmark mark='3'/> us the 
         number of symbols that we can send in a second
             """) as trk:
             self.wait_until_bookmark("1")
-            self.play(Transform(possible_rate, Tex("$Rate = \\frac{C}{H} - \\epsilon$", "$=\\frac{\\frac{bits}{s}}{H}$").move_to(possible_rate, aligned_edge=LEFT)))
+            self.play(Transform(possible_rate, MathTex("Rate = \\frac{C}{H} - \\epsilon", "\\\\", "=\\frac{\\frac{bits}{s}}{H}").move_to(possible_rate, aligned_edge=LEFT)))
             self.wait_until_bookmark("2")
-            self.play(Transform(possible_rate, Tex("$Rate = \\frac{C}{H} - \\epsilon$", "$=\\frac{\\frac{bits}{s}}{\\frac{bits}{symbol}}$").move_to(possible_rate, aligned_edge=LEFT)))
+            self.play(Transform(possible_rate, MathTex("Rate = \\frac{C}{H} - \\epsilon", "\\\\", "=\\frac{\\frac{bits}{s}}{\\frac{bits}{symbol}}").move_to(possible_rate, aligned_edge=LEFT)))
             self.wait_until_bookmark("3")
-            self.play(Transform(possible_rate, Tex("$Rate = \\frac{C}{H} - \\epsilon$", "$=\\frac{symbol}{s}$").move_to(possible_rate, aligned_edge=LEFT)))
+            self.play(Transform(possible_rate, MathTex("Rate = \\frac{C}{H} - \\epsilon", "\\\\", "=\\frac{symbol}{s}").move_to(possible_rate, aligned_edge=LEFT)))
 
         weather_conditions = VGroup(*[Text(x) for x in ["Sunny", "Rainy","Cloudy","Snowy","Windy","Stormy","Foggy","Drizzle"]])
         weather_conditions.arrange(DOWN, aligned_edge=LEFT).shift(6*LEFT).scale(0.6)
@@ -1601,20 +1608,23 @@ class NoiselessChannelTheorem(VoiceoverScene, MovingCameraScene):
         saying that they have a high paying job at a local weather station. They have a channel <bookmark mark='1'/>that can send 2 bits a second
         and they need someone to help them transmit weather data from one station to another.
             """) as trk:
+            self.play(Unwrite(possible_rate[2]))
             self.wait_until_bookmark("1")
             self.play(Transform(capacity, Tex("$C=2\\frac{bits}{s}$").next_to(channel, DOWN)))
         
         with self.voiceover("""
-        You can hear everyone around you saying easy and getting up to take the job. But the weather man tells you the conditions.
+        You can hear everyone around you saying easy and getting up to take the job. But the weather man tells you the catch.
         <bookmark mark='1'/> there are 8 possible weather conditions. And we need to send 10000 states in 10000 seconds. 
             """) as trk:
             self.wait_until_bookmark("1")
             self.play(self.camera.frame.animate.scale(1.3))
             self.play(Write(weather_conditions))
+
         with self.voiceover("""
-        Everyone quicly does the math in their heads <bookmark mark='1'/> and screams that it's not possible. One symbol requires 
+        Everyone quickly does the math in their heads and screams that it's not possible. One <bookmark mark='1'/>symbol requires 
         3 bits to encode and the channel capacity is only 2 bits. But you know better.
             """) as trk:
+            self.wait_until_bookmark("1")
             encodings = VGroup(*[Tex(x).scale(0.6).next_to(weather_conditions[i]) for i, x in enumerate(create_binary_digits(3))])
             self.play(Write(encodings))
         
@@ -1638,7 +1648,8 @@ class NoiselessChannelTheorem(VoiceoverScene, MovingCameraScene):
         written_probs = VGroup(*[Tex(str(x)).scale(0.6).next_to(weather_conditions[i], LEFT)  for i,x in enumerate(probabilities)])
         with self.voiceover("""
         Going into the weather station, you notice that indeed, just as you expected - there are weather states <bookmark mark='1'/>that are much more probable
-        than other ones, so you quickly <bookmark mark='2'/> go over all of them and calculate the entropy
+        than <bookmark mark='2'/>the other ones, so you quickly go over all of them and calculate the entropy to check how much information there really is in
+        the set of possible weather conditions. 
             """) as trk:
             self.wait_until_bookmark("1")
             self.play(Write(written_probs))
@@ -1649,7 +1660,6 @@ class NoiselessChannelTheorem(VoiceoverScene, MovingCameraScene):
                 self.play(written_probs[i].animate.set_color(GREEN))
                 self.play(FadeOut(written_probs[i].copy(), target_position=entropy_text.get_center()))
                 transform_entropy(p)
-
                 partial = p*math.log2(1/p)
                 current_entropy+=(partial)
                 partial_text=Tex(f"$\\approxeq{partial:.2f}$").next_to(entropy_text)
@@ -1661,7 +1671,9 @@ class NoiselessChannelTheorem(VoiceoverScene, MovingCameraScene):
         and it turns out that it's <bookmark mark='2'/> greater than one so you can send more than one symbol per second and 
         get the payment for that job. The only question now is - how do you do this?
             """) as trk:
+            self.wait_until_bookmark("1")
             self.play(Transform(possible_rate, Tex(f"$Rate = \\frac{{2}}{{{current_entropy:.2f}}} - \\epsilon$")))
+            self.wait_until_bookmark("2")
             self.play(Transform(possible_rate, Tex(f"$Rate \\approxeq {(2/current_entropy):.2f}$")))
 
         huffman_codings = [Tex(c).scale(0.6).next_to(weather_conditions[i]) for i,c in enumerate(["0", "1100", "10", "111000", "1101", "111001", "11101", "1111"])]
@@ -1675,7 +1687,7 @@ class NoiselessChannelTheorem(VoiceoverScene, MovingCameraScene):
             self.play(*[Transform(e,h) for e,h in zip(encodings, huffman_codings)])
 
         with self.voiceover("""
-        The codes below are called huffman codes, I won't go into much detail on how to generate them because there is already a magnificent
+        The codes are called huffman codes, I won't go into much detail on how to generate them because there is already a magnificent
         video by Reducible on the subject that I will link in the description for those interested
             """) as trk:
             pass
@@ -1690,9 +1702,9 @@ class NoiselessChannelTheorem(VoiceoverScene, MovingCameraScene):
             length_formulas = VGroup()
             lengths = []
             for i, c in enumerate(["0", "1100", "10", "111000", "1101", "111001", "11101", "1111"]):
-                length_formulas.add(Tex(f'${probabilities[i]} * {len(c)}{"" if i == 7 else " + "}$'))
+                length_formulas.add(Tex(f'${probabilities[i]} * {len(c)}{"" if i == 7 else "+"}$'))
                 lengths.append(probabilities[i] * len(c))
-            length_formulas.arrange_in_grid(2,4).next_to(average_length, DOWN)
+            length_formulas.arrange_in_grid(2,4,buff=0.1).next_to(average_length, DOWN)
             for i in range(len(probabilities)):
                 self.play(Transform(VGroup(encodings[i].copy(), written_probs[i].copy()), length_formulas[i], replace_mobject_with_target_in_scene=True))
 
@@ -2499,3 +2511,10 @@ class TableOfContents(VoiceoverScene):
             self.wait(1)
             self.play(e.close())
             self.wait(1)
+
+
+class Test(Scene):
+    def construct(self):
+        x = Tex("$C$", "$\\displaystyle{=\\lim_{T \\to \\infty} \\frac{\\log N(T)}{T}}$")
+        self.add(x)
+        self.wait(2)
