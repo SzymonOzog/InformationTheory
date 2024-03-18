@@ -1742,16 +1742,30 @@ class NoiselessChannelTheorem(VoiceoverScene, MovingCameraScene):
         self.play(FadeOut(toc.header, *[e.main for e in toc.entries]))
         self.wait(2)
 
-class NoisyChannelTheorem(ZoomedScene):
+class NoisyChannelTheorem(VoiceoverScene, ZoomedScene):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs, zoom_factor=0.05, zoomed_camera_config={'background_opacity': 1, 'default_frame_stroke_width': 0.5}, image_frame_stroke_width=1)
 
     def construct(self):
 
-        title = Text("THE FUNDAMENTAL THEOREM \n             FOR A NOISY CHANNEL")
-        self.play(Write(title))
-        self.wait(1)
-        self.play(FadeOut(title))
+        self.set_speech_service(
+            # RecorderService()
+            GTTSService(transcription_model='base')
+        )
+        toc = TOC(5)
+
+        with self.voiceover(
+            """Hello and welcome to the sixth, and final episode in our series on Information Theory
+            Today we will talk about the fundamental theorem <bookmark mark='1'/> for a noisy channel, also known 
+            as Noisy channel coding theorem, that was first described by Claude Shannon
+            and we will introduce a concept of a channel capacity in presence of noise, 
+            as well as provide a rate at which we can send symbols through the noisy channel - and describe how to do so reliably
+                       """
+                            ) as trk:
+            self.play(Write(toc.header.next_to(toc.entries[0].main, UP, aligned_edge=LEFT)))
+            self.play(*[Write(e.main) for e in toc.entries])
+            self.wait_until_bookmark("1")
+            self.play(toc.entries[5].open())
 
         communication_system = VGroup() 
         source = Square()
@@ -1794,73 +1808,142 @@ class NoisyChannelTheorem(ZoomedScene):
         communication_system.add(noise)
         communication_system.add(Arrow( noise.get_top(), channel.get_bottom(), buff=0, max_stroke_width_to_length_ratio=1, color=RED))
 
-        self.play(Create(communication_system))
+        with self.voiceover("""
+        Given our blueprint<bookmark mark='1'/> for a communication system and using the <bookmark mark='2'/> binary symmetric channel as our 
+        means of communication, we need a way to calculate the<bookmark mark='3'/> rate at which we are able to send information through that channel
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Transform(toc.get_open(5), communication_system, replace_mobject_with_target_in_scene=True))
+
+            bsc = BSC()
+            bsc.full_channel.scale(0.7)        
+
+            source_arrows = VGroup(Arrow(source.get_right(), bsc.input_bit_0.get_left(), buff=0.25, max_stroke_width_to_length_ratio=1, max_tip_length_to_length_ratio=0.1),
+                                Arrow(source.get_right(), bsc.input_bit_1.get_left(), buff=0.25, max_stroke_width_to_length_ratio=1, max_tip_length_to_length_ratio=0.1))
+            destination_arrows = VGroup(Arrow(bsc.output_bit_0.get_right(), destination.get_left(), buff=0.25, max_stroke_width_to_length_ratio=1, max_tip_length_to_length_ratio=0.1),
+                                        Arrow(bsc.output_bit_1.get_right(), destination.get_left(), buff=0.25, max_stroke_width_to_length_ratio=1, max_tip_length_to_length_ratio=0.1))
+
+            bsc.q_label.next_to(source_arrows[0], 0.1*UP)
+            bsc.one_minus_q_label.next_to(source_arrows[1], 0.1*DOWN)
+        
+            self.add(source, destination)
+            communication_system.remove(source, destination)
+            self.wait_until_bookmark("2")
+            self.play(Transform(communication_system, VGroup(bsc.full_channel, source_arrows, destination_arrows)))
+            self.wait(1)
+            q = 0.7
+            p = 0.9
+            q_tr = ValueTracker(q)
+            p_tr = ValueTracker(p)
+            p_text = Tex("$p=\\:$", f"${p_tr.get_value()}$").add_updater(lambda x: x.become(Tex("$p=\\:$",f"${p_tr.get_value():.2f}$"), match_center=True)).next_to(bsc.full_channel, DOWN+RIGHT)
+            q_text = Tex("$q=\\:$", f"${q_tr.get_value()}$").add_updater(lambda x: x.become(Tex("$q=\\:$",f"${q_tr.get_value():.2f}$"), match_center=True)).next_to(bsc.full_channel, DOWN+LEFT)
+            self.play(Write(p_text), Write(q_text))
+            communication_system.add(p_text, q_text, source, destination)
+            self.play(communication_system.animate.scale(0.5).shift(2*UP))
+            self.wait_until_bookmark("3")
+            rate = Tex("$R$", "$\\:=p$", f"$\\:={p_tr.get_value():.2f}$").shift(DOWN)
+            self.play(Write(rate[0]))
         self.wait(1)
 
-        bsc = BSC()
-        bsc.full_channel.scale(0.7)        
+        with self.voiceover("""
+        I believe that you already have the tools and intuition necessary to get to the correct answer, but shannon claims
+        that the first impulse might be to just<bookmark mark='1'/> take the amount of bits that we sent that didn't get flipped
+        For example if we sent with a 90 percent flip probability, <bookmark mark='2'/> 0.9 bits
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Write(rate[1]))
+            self.wait_until_bookmark("2")
+            self.play(Write(rate[2]))
 
-        source_arrows = VGroup(Arrow(source.get_right(), bsc.input_bit_0.get_left(), buff=0.25, max_stroke_width_to_length_ratio=1, max_tip_length_to_length_ratio=0.1),
-                               Arrow(source.get_right(), bsc.input_bit_1.get_left(), buff=0.25, max_stroke_width_to_length_ratio=1, max_tip_length_to_length_ratio=0.1))
-        destination_arrows = VGroup(Arrow(bsc.output_bit_0.get_right(), destination.get_left(), buff=0.25, max_stroke_width_to_length_ratio=1, max_tip_length_to_length_ratio=0.1),
-                                    Arrow(bsc.output_bit_1.get_right(), destination.get_left(), buff=0.25, max_stroke_width_to_length_ratio=1, max_tip_length_to_length_ratio=0.1))
 
-        bsc.q_label.next_to(source_arrows[0], 0.1*UP)
-        bsc.one_minus_q_label.next_to(source_arrows[1], 0.1*DOWN)
-    
-        self.add(source, destination)
-        communication_system.remove(source, destination)
-        self.wait(1)
-        self.play(Transform(communication_system, VGroup(bsc.full_channel, source_arrows, destination_arrows)))
-        self.wait(1)
+        rate.add_updater(lambda x: x.become(Tex("$R$", "$\\:=p$", f"$\\:={p_tr.get_value():.2f}$").shift(DOWN).set_color(RED)))
+        
+        with self.voiceover("""
+        This might seem correct at first,<bookmark mark='1'/> and the idea is right but the formulation is not
+        let's see what happens as we increase the probability of a bit flip to 0.5
+        <bookmark mark='2'/>, by our current definition we are still sending bits with a rate of 0.5, but there is actually no information
+        being transmitted since what the destination gets is just random outcomes
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(rate.animate.set_color(RED))
+            self.wait_until_bookmark("2")
+            self.play(p_tr.animate.set_value(0.5))
 
-        q = 0.7
-        p = 0.9
-        q_tr = ValueTracker(q)
-        p_tr = ValueTracker(p)
-        p_text = Tex("$p=$", f"${p_tr.get_value()}$").add_updater(lambda x: x.become(Tex("$p=$",f"${p_tr.get_value():.2f}$"), match_center=True)).next_to(bsc.full_channel, DOWN+RIGHT)
-        q_text = Tex("$q=$", f"${q_tr.get_value()}$").add_updater(lambda x: x.become(Tex("$q=$",f"${q_tr.get_value():.2f}$"), match_center=True)).next_to(bsc.full_channel, DOWN+LEFT)
-        self.play(Write(p_text), Write(q_text))
-        communication_system.add(p_text, q_text, source, destination)
-        self.play(communication_system.animate.scale(0.5).shift(2*LEFT+2*UP))
-
-        rate = Tex("$R=$").shift(DOWN)
-        self.play(Write(rate))
-        self.wait(1)
-
-        self.play(Transform(rate, Tex("$R$", "$=length(transmited) \\cdot p$", f"$=1000 \\cdot {p_tr.get_value()}$", f"$={1000*p_tr.get_value()}$").shift(DOWN)))
-        self.play(rate.animate.set_color(RED))
-        self.wait(1)
-
-        # rate.add_updater(lambda x: x.become(Tex("$R$", "$=length(transmited) \\cdot p$", f"$=1000 \\cdot {p_tr.get_value():.2f}$", f"$={1000*p_tr.get_value():.2f}$").shift(DOWN).set_color(RED)))
-        self.play(p_tr.animate.set_value(0.5))
-        self.wait(1)
-        self.play(p_tr.animate.set_value(0.0))
-        self.wait(1)
+        with self.voiceover("""
+        Likewise, if we set the probability of a flip to 100%, this formula gives us a rate of 0 bits
+        while we can just flip the bit again on the receiving side to get the correct answer with no information loss
+            """) as trk:
+            self.play(p_tr.animate.set_value(0.0))
 
         p_tr.set_value(0.9)
     
-        ebr = EntropyBoxRepresentation(make_probs(p,q), base_width=3)
-        ebr.set_scale(0.5).whole.next_to(communication_system, RIGHT)
-        self.play(Create(ebr.whole))
+        with self.voiceover("""
+        Evidently the proper correction to apply to the amount of transmitted information is the amount of missing information
+        in the received signal, or in other terms, the uncertainty about what was actually send in the received signal
+        could you formulate that in terms of entropy? 
+            """) as trk:
+            pass
+
+        rate.clear_updaters()
+        with self.voiceover("""
+        The answer is the following - our rate is <bookmark mark='1'/>equal to the entropy of the input, reduced by the entropy of the input 
+        given the output. Or in other words, it's how much information there was in the original signal reduced by how uncertain we are of 
+        what got sent when we receive the signal
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Transform(rate, Tex("$R=\\:$", "$H(X) - H(X|Y)$").shift(DOWN).set_color(GREEN)))
         self.wait(1)
 
-        self.play(Transform(rate, Tex("$R=$", "$H(X) - H(X|Y)$").shift(DOWN).set_color(GREEN)))
-        self.wait(1)
-        self.play(Transform(rate, Tex("$R=$", "$I(X; Y)$").shift(DOWN).set_color(GREEN)))
-        def mutual_inf():  return f"{I(np.array(make_probs(p_tr.get_value(),q_tr.get_value()))):.2f}"
-        self.play(Transform(rate, Tex("$R=$", "$I(X; Y)$", f"$={mutual_inf()}$").shift(DOWN).set_color(GREEN)))
-        capacity = Tex("$C = Max(R)$")
-        self.play(Create(capacity))
-        self.wait(1)
-        q_tr.set_value(0.5)
-        self.play(Transform(rate, Tex("$R=$", "$I(X; Y)$", f"$={mutual_inf()}$").shift(DOWN).set_color(GREEN)))
-        self.wait(1)
-        self.play(Transform(capacity, Tex("$C = Max(R)$", f"$={mutual_inf()}$")))
-        self.wait(1)
+        with self.voiceover("""
+        And as some of you might remember, this is exactly what was formulated as
+        mutual information between the input and the output
+            """) as trk:
+            self.play(Transform(rate, Tex("$R=\\:$", "$I(X; Y)$").shift(DOWN).set_color(GREEN)))
+        def mutual_inf():  return f"{abs(I(np.array(make_probs(p_tr.get_value(),q_tr.get_value())))):.2f}"
 
-        self.play(FadeOut(ebr.whole, communication_system, source, destination, p_text, q_text),
-                  Transform(rate, Tex("$R=$", "$I(X; Y)$").shift(DOWN + 3*RIGHT)),
+        with self.voiceover("""
+        And we can check if our previous examples made sense, 
+        for equal flip probability <bookmark mark='1'/>where we send random data,
+        the rate is indeed 0 and for an inverted case <bookmark mark='2'/> the rate
+        is equal to the expected information in the input
+            """) as trk:
+            self.play(Transform(rate, Tex("$R=\\:$", "$I(X; Y)$", f"$=\\:{mutual_inf()}$").shift(DOWN).set_color(GREEN)))
+            self.wait_until_bookmark("1")
+            rate.add_updater(lambda x : x.become(Tex("$R=\\:$", "$I(X; Y)$", f"$\\:={mutual_inf()}$").shift(DOWN).set_color(GREEN)))
+            self.play(p_tr.animate.set_value(0.5))
+            self.wait_until_bookmark("2")
+            self.play(p_tr.animate.set_value(0.0))
+        
+        self.play(p_tr.animate.set_value(0.9))
+
+        with self.voiceover("""
+        The capacity for the noisy channel, should be <bookmark mark='1'/> the maximum possible rate of transmission
+        and since we can only manipulate the entropy of our source, it would be <bookmark mark='2'/> when the expected
+        information of the sent message is maximal, so when we maximize our input's entropy
+            """) as trk:
+            self.wait_until_bookmark("1")
+            capacity = Tex("$C = Max(R)$")
+            self.play(Write(capacity))
+            self.wait_until_bookmark("2")
+            self.play(q_tr.animate.set_value(0.5))
+            self.wait(1)
+            self.play(Transform(capacity, Tex("$C = Max(R)$", f"$\\:={mutual_inf()}$")))
+
+        with self.voiceover("""
+        The notion of a capacity of a noisy channel may seem uncomfortable at first, why would we define such a metric since the 
+        output is never fully certain? However it should be clear that we can reduce the uncertainty of the message by adding redundancy to it.
+            """) as trk:
+            pass
+        with self.voiceover("""
+        For example imagine that we sent the same message 1000 times, statistically we would be able to recover the 
+        original message, with a very low probability of error, but our rate of transmission would drop by a factor of a 1000
+            """) as trk:
+            pass
+
+        rate.clear_updaters()
+        capacity.clear_updaters()
+        self.play(FadeOut(communication_system, source, destination, p_text, q_text),
+                  Transform(rate, Tex("$R=\\:$", "$I(X; Y)$").shift(DOWN + 3*RIGHT)),
                   Transform(capacity, Tex("$C = Max(R)$").shift(3*RIGHT)))
 
         self.wait(1)
@@ -1882,16 +1965,33 @@ class NoisyChannelTheorem(ZoomedScene):
         non_attainable.add(non_attainable_text)
 
         ar_plot = VGroup(*[attainable, non_attainable, ax, labels, c_label]).scale(0.6).shift(3*LEFT)
-        self.play(Create(ar_plot))
-        self.wait(1)
+        with self.voiceover("""
+        Here is where the beauty of the noisy channel theorem comes at play, <bookmark mark='1'/>it shows what are the attainable 
+        <bookmark mark='2'/>uncertainties of the input given the output when we send data through a source<bookmark mark='3'/> with
+        a certain entropy
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Create(ax))
+            self.wait_until_bookmark("2")
+            self.play(Create(labels[1]))
+            self.wait_until_bookmark("3")
+            self.play(Create(labels[0]))
 
-        self.zoomed_camera.frame.move_to(ax.c2p(0.3, EPS))
-        self.activate_zooming(True)
-        self.wait(1)
-        l = DashedLine(ax.c2p(0.3,EPS/3.5),ax.c2p(0.3, EPS), stroke_width=0.3, color=BLUE)
-        t = Tex("$\\epsilon$", color=BLUE).scale(0.07).next_to(l, buff=0.01)
-        self.play(Create(l), Create(t))
-        self.wait(1)
+
+        with self.voiceover("""
+        And it revolutionized the modern world by showing that if we transmit data with rates up to 
+        our channel's capacity<bookmark mark='1'/> the error rate can be made arbitrarily small
+            """) as trk:
+            self.play(Create(attainable), Create(non_attainable), Create(c_label))
+            self.zoomed_camera.frame.move_to(ax.c2p(0.3, EPS))
+            self.activate_zooming(True)
+            self.wait_until_bookmark("1")
+            l = DashedLine(ax.c2p(0.3,EPS/3.5),ax.c2p(0.3, EPS), stroke_width=0.3, color=BLUE)
+            t = Tex("$\\epsilon$", color=BLUE).scale(0.07).next_to(l, buff=0.01)
+            self.play(Create(l), Create(t))
+
+        self.wait(3)
+        self.play(*[FadeOut(x) for x in self.mobjects])
 
                 
         
@@ -2515,6 +2615,6 @@ class TableOfContents(VoiceoverScene):
 
 class Test(Scene):
     def construct(self):
-        x = Tex("$C$", "$\\displaystyle{=\\lim_{T \\to \\infty} \\frac{\\log N(T)}{T}}$")
+        x = Tex("$C=\\:$", "$x$")
         self.add(x)
         self.wait(2)
