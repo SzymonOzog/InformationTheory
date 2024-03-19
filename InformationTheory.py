@@ -1999,8 +1999,12 @@ def combine_positions(a,b,mask):
     mask = np.array(mask)
     return a*mask + b*(1-mask)
 
-class NoisyChannelTheorem2(Scene):
+class NoisyChannelTheorem2(VoiceoverScene):
     def construct(self):
+        self.set_speech_service(
+            # RecorderService()
+            GTTSService(transcription_model='base')
+        )
         communication_system = VGroup() 
         source = Square()
         source.add(Text("Information\nSource", font_size=20,))
@@ -2046,16 +2050,26 @@ class NoisyChannelTheorem2(Scene):
         decoding = Text("Decoding", font_size=20, color=BLUE_D).next_to(receiver.submobjects[0], DOWN)
         decoding_box = SurroundingRectangle(decoding, color=BLUE_D)
         decoding_box.add(decoding)
-        self.play(Create(communication_system), Create(decoding_box), Create(encoding_box))
-        self.wait(1)
 
-        self.remove(encoding_box, decoding_box)
-        self.play(Indicate(encoding_box), Indicate(decoding_box))
-        self.add(encoding_box, decoding_box)
-        self.play(FadeOut(encoding_box), FadeOut(decoding_box))
-        self.play(communication_system.animate.shift(3*UP))
-        encoding_box.shift(3*UP)
-        decoding_box.shift(3*UP)
+        with self.voiceover("""
+        But before we get into the intuition behind the noisy channel, let's see how can we send messages reliably, 
+        because obviously repetition is not going to take us very far.
+            """) as trk:
+            self.play(Create(communication_system))
+
+        with self.voiceover("""
+        I already hinted this before but we are going to use encoding and decoding
+        to add redundancy to our message that reduces the error rate introduced by the noise.
+            """) as trk:
+            self.play(Create(decoding_box), Create(encoding_box))
+
+        with self.voiceover("""
+        Let's see and example, where we don't perform any encoding
+            """) as trk:
+            self.play(FadeOut(encoding_box), FadeOut(decoding_box))
+            self.play(communication_system.animate.shift(3*UP))
+            encoding_box.shift(3*UP)
+            decoding_box.shift(3*UP)
         
         source_message = VGroup(*[Tex(str(x)).scale(0.6) for x in range(0,4)]).arrange(DOWN)
         source_message.move_to(combine_positions(source.get_center(), source_message.get_center(), [1,0,0]))
@@ -2069,137 +2083,182 @@ class NoisyChannelTheorem2(Scene):
         destination_message = VGroup(*[Tex(str(x)).scale(0.6) for x in range(0,5)]).arrange(DOWN)
         destination_message = destination_message.move_to(combine_positions(destination.get_center(), destination_message.get_center(), [1,0,0]))
 
-        self.play(Transform(source.copy(), source_message, replace_mobject_with_target_in_scene=True))
-        self.play(Transform(transmitter.copy(), transmitted_message, replace_mobject_with_target_in_scene=True))
 
-        s_t_arrows = VGroup(*[Line(s.get_right(), t.get_left(), buff=0.25) for s,t in zip(source_message, transmitted_message)])
-        r_d_arrows = VGroup(*[Line(r.get_right(), d.get_left(), buff=0.25) for r,d in zip(noisy_message, destination_message)])
-        self.play(Create(s_t_arrows))
+        with self.voiceover("""
+        Imagine that our source sends digits from 0 to 3, since there is no encoding our transmitter just blindly
+        <bookmark mark='1'/> copies the message and sends it over our channel
+            """) as trk:
+            self.play(Transform(source.copy(), source_message, replace_mobject_with_target_in_scene=True))
+            self.wait_until_bookmark("1")
+            self.play(Transform(transmitter.copy(), transmitted_message, replace_mobject_with_target_in_scene=True))
+            s_t_arrows = VGroup(*[Line(s.get_right(), t.get_left(), buff=0.25) for s,t in zip(source_message, transmitted_message)])
+            r_d_arrows = VGroup(*[Line(r.get_right(), d.get_left(), buff=0.25) for r,d in zip(noisy_message, destination_message)])
+            self.play(Create(s_t_arrows))
 
-        self.wait(1)
-        t_r_arrows = []
-        for i in range(4):
-            src = transmitted_message[i]
-            target1 = noisy_message[i]
-            target2 = noisy_message[i+1]
-            a1 = Line(src.get_right(), target1.get_left(), color=GREEN, buff=0.25)
-            a2 = Line(src.get_right(), target2.get_left(), color=RED, buff=0.25) 
-            t_r_arrows.extend([a1,a2])
-            if i == 0:
-                self.play(Create(target1))
-            self.play(Create(a1), Create(a2), Create(target2))
+        with self.voiceover("""
+        There, it is disrupted by noise that randomly increments the number in our message.
+            """) as trk:
+            t_r_arrows = []
+            for i in range(4):
+                src = transmitted_message[i]
+                target1 = noisy_message[i]
+                target2 = noisy_message[i+1]
+                a1 = Line(src.get_right(), target1.get_left(), color=GREEN, buff=0.25)
+                a2 = Line(src.get_right(), target2.get_left(), color=RED, buff=0.25) 
+                t_r_arrows.extend([a1,a2])
+                if i == 0:
+                    self.play(Create(target1))
+                self.play(Create(a1), Create(a2), Create(target2))
 
-        self.play(Transform(destination.copy(), destination_message, replace_mobject_with_target_in_scene=True))
-        self.play(Create(r_d_arrows))
+        with self.voiceover("""
+        And again, there is no decoding so we can completely skip the receiver 
+            """) as trk:
+            self.play(Transform(destination.copy(), destination_message, replace_mobject_with_target_in_scene=True))
+            self.play(Create(r_d_arrows))
 
-        self.play(FadeOut(source_message[1], source_message[3],
-                          *t_r_arrows[2:4], *t_r_arrows[6:]))
-        self.wait(1)
+
+        with self.voiceover("""
+        Currently there is no way to unambiguously map the message that was received at the destination
+        to the message that was sent, but there are messages outputs are non confusable, <bookmark mark='1'/>
+        let's say we just send 0 and 2, now there is no ambiguity about the message on the receiving side
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(FadeOut(source_message[1], source_message[3],
+                            *t_r_arrows[2:4], *t_r_arrows[6:]))
+
         self.play(FadeIn(source_message[1], source_message[3],
-                          *t_r_arrows[2:4], *t_r_arrows[6:]))
+                        *t_r_arrows[2:4], *t_r_arrows[6:]))
         self.wait(1)
 
         self.play(FadeOut(*t_r_arrows, *r_d_arrows, noisy_message, destination_message))
 
         encoded_message = VGroup(*[Tex(str(x)).scale(0.6) for x in range(0,8,2)]).arrange(DOWN).shift(LEFT)
         encoded_message.move_to(combine_positions(transmitter.get_center(), encoded_message.get_center(), [1,0,0]))
-        self.play(FadeIn(encoding_box))
-        self.play(*[Transform(t, e, replace_mobject_with_target_in_scene=True) for t,e in zip(transmitted_message, encoded_message)])
-        self.play(*[a.animate.set_color(encoding_box.color) for a in s_t_arrows])
+
+        with self.voiceover("""
+        So for this case, we can just use encoding<bookmark mark='1'/> and map all of our messages, so that they are a multiple of 2
+            """) as trk:
+            self.play(FadeIn(encoding_box))
+            self.play(*[Transform(t, e, replace_mobject_with_target_in_scene=True) for t,e in zip(transmitted_message, encoded_message)])
+            self.play(*[a.animate.set_color(encoding_box.color) for a in s_t_arrows])
 
         self.wait(1)
         noisy_message = VGroup(*[Tex(str(x)).scale(0.6) for x in range(0,8)]).arrange(DOWN)
         noisy_message = noisy_message.move_to(combine_positions(channel.get_center(), noisy_message.get_center(), [1,0,0]))
 
-        noise_arrows = []
-        for i in range(0, len(noisy_message), 2):
-            src = encoded_message[i//2]
-            target1 = noisy_message[i]
-            target2 = noisy_message[i+1]
-            a1 = Line(src.get_right(), target1.get_left(), color=GREEN, buff=0.25)
-            a2 = Line(src.get_right(), target2.get_left(), color=RED, buff=0.25) 
-            noise_arrows.extend([a1,a2])
-            self.play(Create(a1), Create(a2), Create(target2), Create(target1))
-
-        recieved_message = encoded_message.copy().move_to(combine_positions(receiver.get_center(), encoded_message.get_center(), [1,0,0]))
-        decoding_arrows = []
-        for i in range(0, len(noisy_message), 2):
-            src1 = noisy_message[i]
-            src2 = noisy_message[i+1]
-            target = recieved_message[i//2]
-            a1 = Line(src1.get_right(), target.get_left(), color=GREEN, buff=0.25)
-            a2 = Line(src2.get_right(), target.get_left(), color=RED, buff=0.25) 
-            decoding_arrows.extend([a1,a2])
-            self.play(Create(a1), Create(a2), Create(target))
+        with self.voiceover("""
+        And now even if our noise increments the message, it is still not overlapping with any other message in our subset of messages
+            """) as trk:
+            noise_arrows = []
+            for i in range(0, len(noisy_message), 2):
+                src = encoded_message[i//2]
+                target1 = noisy_message[i]
+                target2 = noisy_message[i+1]
+                a1 = Line(src.get_right(), target1.get_left(), color=GREEN, buff=0.25)
+                a2 = Line(src.get_right(), target2.get_left(), color=RED, buff=0.25) 
+                noise_arrows.extend([a1,a2])
+                self.play(Create(a1), Create(a2), Create(target2), Create(target1))
+            recieved_message = encoded_message.copy().move_to(combine_positions(receiver.get_center(), encoded_message.get_center(), [1,0,0]))
+            decoding_arrows = []
+            for i in range(0, len(noisy_message), 2):
+                src1 = noisy_message[i]
+                src2 = noisy_message[i+1]
+                target = recieved_message[i//2]
+                a1 = Line(src1.get_right(), target.get_left(), color=GREEN, buff=0.25)
+                a2 = Line(src2.get_right(), target.get_left(), color=RED, buff=0.25) 
+                decoding_arrows.extend([a1,a2])
+                self.play(Create(a1), Create(a2), Create(target))
 
         decoded_message = VGroup(*[Tex(str(x)).scale(0.6) for x in range(0,4)]).arrange(DOWN).shift(RIGHT)
-        self.play(FadeIn(decoding_box))
         decoded_message = decoded_message.move_to(combine_positions(destination.get_center(), decoded_message.get_center(), [1,0,0]))
         r_d_arrows = VGroup(*[Line(r.get_right(), d.get_left(), buff=0.25, color=decoding_box.color) for r,d in zip(recieved_message, decoded_message)])
 
-        for i in range(len(decoded_message)):
-            decoder_cpy = decoding_box.copy()
-            self.play(FadeOut(recieved_message[i].copy(), target_position=decoder_cpy))
-            self.play(Transform(decoder_cpy, r_d_arrows[i], replace_mobject_with_target_in_scene=True), Create(decoded_message[i]))
+        with self.voiceover("""
+        All that is now left is to use the decoder to map our encoded messages, back to their original
+        form and voila - we achieved reliable transmission in presence of noise
+            """) as trk:
+            self.play(FadeIn(decoding_box))
+            for i in range(len(decoded_message)):
+                decoder_cpy = decoding_box.copy()
+                self.play(FadeOut(recieved_message[i].copy(), target_position=decoder_cpy))
+                self.play(Transform(decoder_cpy, r_d_arrows[i], replace_mobject_with_target_in_scene=True), Create(decoded_message[i]))
 
         self.wait(1)
-        self.play(FadeOut(*decoding_arrows, *noise_arrows))
-        self.wait(1)
 
-        animations = []
-        for grp in [source_message, encoded_message, noisy_message, recieved_message, decoded_message]:
-            for i, src in enumerate(grp):
-                binary_text = Tex(to_binary(int(src.get_tex_string()), 3)).scale(0.6).move_to(src)
-                animations.append(Transform(src, binary_text, replace_mobject_with_target_in_scene=True))
-                grp[i] = binary_text
-        self.play(*animations)
-        self.wait(1)
+        with self.voiceover("""
+        But that is not exactly fair, since real world data and noise do not really look like this
+        and is usually <bookmark mark='1'/>in some sort of binary form
+            """) as trk:
+            self.play(FadeOut(*decoding_arrows, *noise_arrows))
+            self.wait_until_bookmark("1")
+            animations = []
+            for grp in [source_message, encoded_message, noisy_message, recieved_message, decoded_message]:
+                for i, src in enumerate(grp):
+                    binary_text = Tex(to_binary(int(src.get_tex_string()), 3)).scale(0.6).move_to(src)
+                    animations.append(Transform(src, binary_text, replace_mobject_with_target_in_scene=True))
+                    grp[i] = binary_text
+            self.play(*animations)
 
-        def diff(a, b): return sum([0 if a[i]==b[i] else 1 for i in range(len(a))])
+        def diff(a, b): 
+            return sum([0 if a[i]==b[i] else 1 for i in range(len(a))])
         src = encoded_message[0]
         colors = [GREEN, RED_C, RED_B, RED_A]
         transmitting_lines = []
         for r in noisy_message:
             transmitting_lines.append(Line(src.get_right(), r.get_left(), buff=0.25, color=colors[diff(src.get_tex_string(), r.get_tex_string())]))    
-        self.play(*[Create(t) for t in transmitting_lines])
+        with self.voiceover("""
+        And the noise just changes each bit with some probability. The important thing to note is that if we are not flipping our bits at random
+        there will be some outcomes of noise that are more probable than others, this is denoted by different colors here. 
+            """) as trk:
+            self.play(*[Create(t) for t in transmitting_lines])
         self.wait(1)
         
-        src = recieved_message[0]
-        decoding_lines = []
-        for r in noisy_message:
-            decoding_lines.append(Line(r.get_right(), src.get_left(), buff=0.25, color=colors[diff(src.get_tex_string(), r.get_tex_string())]))    
-        self.play(*[Create(d) for d in decoding_lines])
-        self.wait(1) 
+        with self.voiceover("""
+        And the same goes for the receiving part
+            """) as trk:
+            src = recieved_message[0]
+            decoding_lines = []
+            for r in noisy_message:
+                decoding_lines.append(Line(r.get_right(), src.get_left(), buff=0.25, color=colors[diff(src.get_tex_string(), r.get_tex_string())]))    
+            self.play(*[Create(d) for d in decoding_lines])
+            self.wait(1) 
 
-        self.play(*[FadeOut(l) for l in transmitting_lines+decoding_lines if l.color == RED_B or l.color == RED_A])
-        self.wait(1) 
 
-        src = recieved_message[3]
-        new_code = Tex("111").scale(0.6).move_to(src)
-        self.play(Transform(src, new_code, replace_mobject_with_target_in_scene=True)) 
-        recieved_message[3] = new_code
+        with self.voiceover("""
+        To combat noise, we can just assume that some of those pattens of perturbation by noise are so improbable that they will never happen
+            """) as trk:
+            self.play(*[FadeOut(l) for l in transmitting_lines+decoding_lines if str(l.color).upper() == RED_B or str(l.color).upper() == RED_A])
 
-        src = encoded_message[3]
-        new_code = Tex("111").scale(0.6).move_to(src)
-        self.play(Transform(src, new_code, replace_mobject_with_target_in_scene=True)) 
-        encoded_message[3] = new_code
-        src = encoded_message[3]
+        with self.voiceover("""
+        Right now we can use this encoding to send a second message through our channel.
+        <bookmark mark='1'/>
+        Since their subset of probable outcomes of noise does not overlap 
+            """) as trk:
+            src = recieved_message[3]
+            new_code = Tex("111").scale(0.6).move_to(src)
+            self.play(Transform(src, new_code, replace_mobject_with_target_in_scene=True)) 
+            recieved_message[3] = new_code
 
-        transmitting_lines2 = []
-        for r in noisy_message:
-            transmitting_lines2.append(Line(src.get_right(), r.get_left(), buff=0.25, color=colors[diff(src.get_tex_string(), r.get_tex_string())]))    
-        self.play(*[Create(t) for t in transmitting_lines2])
-        self.wait(1)
-        
-        src = recieved_message[3]
-        decoding_lines2 = []
-        for r in noisy_message:
-            decoding_lines2.append(Line(r.get_right(), src.get_left(), buff=0.25, color=colors[diff(src.get_tex_string(), r.get_tex_string())]))    
-        self.play(*[Create(d) for d in decoding_lines2])
-        self.wait(1)
+            src = encoded_message[3]
+            new_code = Tex("111").scale(0.6).move_to(src)
+            self.play(Transform(src, new_code, replace_mobject_with_target_in_scene=True)) 
+            encoded_message[3] = new_code
+            src = encoded_message[3]
 
-        self.play(*[FadeOut(l) for l in transmitting_lines2+decoding_lines2 if l.color == RED_B or l.color == RED_A])
-        self.wait(1)
+            self.wait_until_bookmark("1")
+            transmitting_lines2 = []
+            for r in noisy_message:
+                transmitting_lines2.append(Line(src.get_right(), r.get_left(), buff=0.25, color=colors[diff(src.get_tex_string(), r.get_tex_string())]))    
+            self.play(*[Create(t) for t in transmitting_lines2])
+            
+            src = recieved_message[3]
+            decoding_lines2 = []
+            for r in noisy_message:
+                decoding_lines2.append(Line(r.get_right(), src.get_left(), buff=0.25, color=colors[diff(src.get_tex_string(), r.get_tex_string())]))    
+            self.play(*[Create(d) for d in decoding_lines2])
+
+            self.play(*[FadeOut(l) for l in transmitting_lines2+decoding_lines2 if str(l.color).upper() == RED_B or str(l.color).upper() == RED_A])
+        self.wait(3)
 
 def num_binary_ones(length, num_ones):
     return int(math.factorial(length) / (math.factorial(num_ones) * math.factorial(length - num_ones)))
