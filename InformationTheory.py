@@ -2260,6 +2260,249 @@ class NoisyChannelTheorem2(VoiceoverScene):
             self.play(*[FadeOut(l) for l in transmitting_lines2+decoding_lines2 if str(l.color).upper() == RED_B or str(l.color).upper() == RED_A])
         self.wait(3)
 
+
+        bsc = BSC()
+        bsc.full_channel.scale(0.7).shift(3*UP)        
+        bsc.full_channel.remove(bsc.q_label, bsc.one_minus_q_label, bsc.one_minus_p_label0, bsc.p_label0, bsc.one_minus_p_label1, bsc.p_label1)
+ 
+        source_arrows = VGroup(Arrow(source.get_right(), bsc.input_bit_0.get_left(), buff=0.25, max_stroke_width_to_length_ratio=2, max_tip_length_to_length_ratio=0.1),
+                               Arrow(source.get_right(), bsc.input_bit_1.get_left(), buff=0.25, max_stroke_width_to_length_ratio=2, max_tip_length_to_length_ratio=0.1))
+        destination_arrows = VGroup(Arrow(bsc.output_bit_0.get_right(), destination.get_left(), buff=0.25, max_stroke_width_to_length_ratio=2, max_tip_length_to_length_ratio=0.1),
+                                    Arrow(bsc.output_bit_1.get_right(), destination.get_left(), buff=0.25, max_stroke_width_to_length_ratio=2, max_tip_length_to_length_ratio=0.1))
+
+        with self.voiceover("""
+        With that in mind, it is now time to get an intuition behind the noisy channel theorem 
+        <bookmark mark='1'/>
+        again we will be using our binary symmetric channel as an example
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(*[FadeOut(x) for x in self.mobjects if x not in [communication_system]])
+            self.play(Transform(communication_system, VGroup(bsc.full_channel, source_arrows, destination_arrows, source.copy(), destination.copy()).shift(LEFT).scale(0.5)))
+        
+        radius=DEFAULT_SMALL_DOT_RADIUS
+        buffer=0.15
+        three_dots = VGroup(*[Dot(radius=radius*2/3, color=GREY) for _ in range(3)]).arrange(DOWN,buff=0.1)
+
+        def create_digits(l):
+            binary_digits = create_binary_digits(l)
+            binary_digits.sort(key=lambda x: x.count("1"))
+            tex_digits = [Tex(x).scale(0.7) for x in binary_digits]
+            if l < 4:
+                return VGroup(*tex_digits).arrange(DOWN, center=False, buff=buffer)
+            return VGroup(*(tex_digits[:6] + [three_dots] + tex_digits[-6:])).arrange(DOWN, center=False, buff=buffer)
+
+        with self.voiceover("""
+        So far we were only using encoding and decoding with a single message. But it is much more efficient
+        when we use something called an extended channel.
+            """) as trk:
+            self.play(ShowPassingFlash(source_arrows.copy().set_color(BLUE), time_width=0.7))
+            x_outcomes = create_digits(1).shift(1.5*UP)
+            x_outcomes.move_to(combine_positions(bsc.input_0_text.get_center(), x_outcomes.get_center(), [1, 0, 0]))
+            self.play(Transform(VGroup(bsc.input_0_text.copy(), bsc.input_1_text.copy()), x_outcomes, replace_mobject_with_target_in_scene=True))
+
+            self.play(ShowPassingFlash(bsc.arrows.copy().set_color(BLUE), time_width=0.7))
+            y_outcomes = x_outcomes.copy()
+            y_outcomes.move_to(combine_positions(bsc.output_1_text.get_center(), y_outcomes.get_center(), [1, 0, 0]))
+            self.play(Transform(VGroup(bsc.output_0_text.copy(), bsc.output_1_text.copy()), y_outcomes, replace_mobject_with_target_in_scene=True))
+            self.wait(1)
+            usage = Tex("$T = $", "1").next_to(x_outcomes, LEFT).shift(2*LEFT)
+            self.play(Create(usage))
+
+        with self.voiceover("""
+        The idea of an extended channel is that we use our channel to send multiple messages, and encode and then decode
+        a block made out of them. Here the number of symbols that form that block is denoted by capital T.
+            """) as trk:
+            for l in range(2, 5):
+                self.play(ShowPassingFlash(source_arrows.copy().set_color(BLUE), time_width=0.7))
+                dir = x_outcomes.get_edge_center(UP)
+                x_outcomes = VGroup(x_outcomes, bsc.input_0_text.copy(), bsc.input_1_text.copy())
+                self.play(Transform(x_outcomes, create_digits(l).move_to(dir, aligned_edge=UP)))
+                self.play(Transform(usage, Tex("$T = $", f"{l}").move_to(usage)))
+                self.play(ShowPassingFlash(bsc.arrows.copy().set_color(BLUE), time_width=0.7))
+                dir = y_outcomes.get_edge_center(UP)
+                y_outcomes = VGroup(y_outcomes, bsc.output_0_text.copy(), bsc.output_1_text.copy())
+                self.play(Transform(y_outcomes, create_digits(l).move_to(dir, aligned_edge=UP)))
+        self.wait(1)
+
+        binary_digits = create_binary_digits(7)
+        binary_digits.sort(key=lambda x: x.count("1"))
+        tex_digits = [Tex(x[:3], "...", x[-3:]).scale(0.7) for x in binary_digits]
+        long_message = VGroup(*(tex_digits[:6] + [three_dots] + tex_digits[-6:])).arrange(DOWN, center=False, buff=buffer)
+
+        with self.voiceover("""
+        To give an intuitive understanding of the noisy channel theorem <bookmark mark='1'/>
+        we are going to work with large blocks, so just imagine for now that we encode an infinitely 
+        long sequence of messages
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Transform(usage, Tex("$T \\to \\infty$").move_to(usage)))
+            self.play(Transform(x_outcomes, long_message.copy().move_to(x_outcomes, aligned_edge=UP)))
+            self.play(Transform(y_outcomes, long_message.copy().move_to(y_outcomes, aligned_edge=UP)))
+            self.wait(1)
+            
+            dot_anims = []
+            for i in range(len(x_outcomes)):
+                if i != 6:
+                    dot_anims.append(Transform(x_outcomes[i], Dot(radius=radius).move_to(x_outcomes[i])))
+                    dot_anims.append(Transform(y_outcomes[i], Dot(radius=radius).move_to(y_outcomes[i])))
+
+            self.play(LaggedStart(*dot_anims))
+
+        with self.voiceover("""
+        In this scenarios there will be two to the power or T
+        possible messages we can send
+            """) as trk:
+            probable_messages = Tex("$2^{T}$").next_to(x_outcomes, LEFT)
+            self.play(Transform(usage.copy(), probable_messages, replace_mobject_with_target_in_scene=True))
+
+        all_arrows = VGroup()
+        
+        causes_arrows = VGroup()
+        for i in range(13):
+            causes_arrows.add(Line(x_outcomes[0].get_center(), y_outcomes[i].get_center(), stroke_width=1))
+
+        with self.voiceover("""
+        And each message can be obfuscated by noise, into every other output message with varying probabilities
+            """) as trk:
+            self.play(LaggedStart(*[Create(c) for c in causes_arrows]))
+            all_arrows.add(causes_arrows)
+            self.wait(1)
+
+        error_free1 = Tex("$2^{RT} = $", "$\\frac{}{}$").shift(2*RIGHT)
+        error_free2 = Tex("$2^{RT} = $", "$\\frac{output\\ messages}{}$").move_to(error_free1, LEFT)
+        error_free3 = Tex("$2^{RT} = $", "$\\frac{output\\ messages}{unique\\ messages}$").move_to(error_free2, LEFT)
+
+        with self.voiceover("""
+        Our rate is essentially the amount <bookmark mark='1'/>of bits that we can send reliably through our channel
+        each cycle
+        To calculate it, we need to take the amout of messages <bookmark mark='2'/>that we can send
+        and <bookmark mark='3'/> divide them by the amount of messages that can be uniquely encoded
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Create(error_free2[0]))
+            self.wait_until_bookmark("2")
+            self.play(Transform(y_outcomes.copy(), error_free2[1], replace_mobject_with_target_in_scene=True))
+            self.wait_until_bookmark("3")
+            self.play(Transform(VGroup(error_free2, causes_arrows.copy()), error_free3, replace_mobject_with_target_in_scene=True))
+
+        num_noised = probable_messages.copy().next_to(causes_arrows, DOWN)
+        num_output = probable_messages.copy().next_to(y_outcomes, RIGHT)
+        with self.voiceover("""
+        With our current assumptions, the amount of output messages<bookmark mark='1'/> and the amount of unique messages
+        <bookmark mark='2'/> will be the same as the amount of input messages
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Transform(y_outcomes.copy(), num_output, replace_mobject_with_target_in_scene=True))
+            self.wait_until_bookmark("2")
+            self.play(Transform(causes_arrows.copy(), num_noised, replace_mobject_with_target_in_scene=True))
+
+        error_free4=Tex("$2^{RT} = $", "$\\frac{2^{T}}{2^{T}}$", "$ = 2^0$", "$ = 1$").move_to(error_free3, LEFT)
+        with self.voiceover("""
+        If we do the math this essentially boils down to just a rate of 1. And it is true, if we want a completely error free
+        communication we can only send one message no matter how long our block is.
+            """) as trk:
+            self.play(Transform(error_free3, error_free4[:2]))
+            self.wait(1)
+            self.play(Write(error_free4[2]))
+            self.wait(1)
+            self.play(Write(error_free4[3]))
+        self.play(Transform(error_free3, error_free4))
+        self.remove(error_free4[2])
+        self.remove(error_free4[3])
+
+
+        uncreation = []
+        for i in range(12, 2, -1):
+            uncreation.append(Uncreate(causes_arrows[i]))
+
+        with self.voiceover("""
+        And as you might have already guessed, we are going to do the same trick as before <bookmark mark='1'/>
+        we pick a very small error rate that we are satisfied with, and we prune out the connections between the messages
+        that have such low probability that they will almost certainly never happen
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(LaggedStart(*uncreation))
+
+            for i in range(12, 2, -1):
+                causes_arrows.remove(causes_arrows[i])
+
+            creation = []
+            for i in range(1,13):
+                if i == 6: continue
+                causes_arrows = VGroup()
+                for j in range(3):
+                    idx = i+j if i<=6 else i-j
+                    causes_arrows.add(Line(x_outcomes[i].get_center(), y_outcomes[idx].get_center(), stroke_width=1))
+                    if idx == 6: break
+
+                creation.append(LaggedStart(*[Create(c) for c in causes_arrows]))
+                all_arrows.add(causes_arrows)
+            self.play(LaggedStart(*creation))
+        
+            uncreation = []
+            for i in range(11, 0, -1):
+                if i in [0, 3, 8, 11]: continue
+                uncreation.append(LaggedStart(*[Uncreate(a) for a in all_arrows[i]]))
+            self.play(LaggedStart(*uncreation))
+
+        
+        with self.voiceover("""
+        Then we just use the input messages that map to unique output messages
+            """) as trk:
+            for i in range(11, 0, -1):
+                if i in [0, 3, 8, 11]: continue
+                all_arrows.remove(all_arrows[i])
+
+        self.wait(1)
+
+        with self.voiceover("""
+        But to be fair, we also need to consider that there will be some inputs and outputs that will also be improbable
+        <bookmark mark='1'/> so that leaves us with 2 to the power of entropy of our input times the amount of messages that we sent
+        of probable input messages, <bookmark mark='2'/> and similarly for the output
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(Transform(probable_messages, Tex("$2^{H(X)T}$").move_to(probable_messages, RIGHT)))
+            self.wait_until_bookmark("2")
+            self.play(Transform(num_output, Tex("$2^{H(Y)T}$").move_to(num_output, LEFT+DOWN)),
+                    Transform(error_free3, Tex("$2^{RT} = $", "$\\frac{2^{H(Y)T}}{2^{T}}$").move_to(error_free3, LEFT)))
+        
+        with self.voiceover("""
+        And the reasonable effects for each message that we sent is equal <bookmark mark='1'/>to the amount of information that our input
+        gives as about the output, again multiplied by the amount of messages that we sent
+            """) as trk:
+            self.play(Transform(num_noised, Tex("$2^{H(Y|X)T}$").move_to(num_noised, LEFT+DOWN)),
+                    Transform(error_free3, Tex("$2^{RT} = $", "$\\frac{2^{H(Y)T}}{2^{H(Y|X)T}}$").move_to(error_free3, LEFT)))
+
+        with self.voiceover("""
+        And this essentially simplifies to our rate being equal to mutual information between the input and the output
+        - this is exactly the outcome, that Shannon came to in his work.
+            """) as trk:
+            self.play(Transform(error_free3, Tex("$2^{RT} = $", "$2^{I(X;Y)T}$").move_to(error_free3, LEFT)))
+            self.wait(2)
+            self.play(Transform(error_free3, Tex("$R$", "$I(X;Y)$").move_to(error_free3, LEFT)))
+        
+        with self.voiceover("""
+        The interesting part about the noisy channel theorem is that it does not tell you how to find the codes,
+        it just proves that they exist - and up to this day there is still a huge amount of work being put into finding the 
+        best codes for<bookmark mark='1'/> some types of channels.
+            """) as trk:
+            self.wait_until_bookmark("1")
+            self.play(FadeOut(*[o for o in self.mobjects]))
+
+
+        toc = TOC(5)
+        with self.voiceover("""
+        This is where I leave you, the series has been a long and great journey for me
+        I learned a lot through making this, and I hope that you learned as much by watching it.
+            """) as trk:
+            self.play(Write(toc.header.next_to(toc.entries[0].main, UP, aligned_edge=LEFT)))
+            self.play(*[Write(e.main) for e in toc.entries])
+
+        self.play(toc.entries[5].main.animate.set_color(GREEN))
+        self.wait(2)
+        self.play(FadeOut(toc.header, *[e.main for e in toc.entries]))
+        self.wait(2)
+
 def num_binary_ones(length, num_ones):
     return int(math.factorial(length) / (math.factorial(num_ones) * math.factorial(length - num_ones)))
 
@@ -2468,155 +2711,6 @@ class NoisyChannelTheorem4(Scene):
                   encoding_box.animate.shift(3*UP),
                   decoding_box.animate.shift(3*UP))
 
-        bsc = BSC()
-        bsc.full_channel.scale(0.7).shift(3*UP)        
-        bsc.full_channel.remove(bsc.q_label, bsc.one_minus_q_label, bsc.one_minus_p_label0, bsc.p_label0, bsc.one_minus_p_label1, bsc.p_label1)
- 
-        source_arrows = VGroup(Arrow(source.get_right(), bsc.input_bit_0.get_left(), buff=0.25, max_stroke_width_to_length_ratio=2, max_tip_length_to_length_ratio=0.1),
-                               Arrow(source.get_right(), bsc.input_bit_1.get_left(), buff=0.25, max_stroke_width_to_length_ratio=2, max_tip_length_to_length_ratio=0.1))
-        destination_arrows = VGroup(Arrow(bsc.output_bit_0.get_right(), destination.get_left(), buff=0.25, max_stroke_width_to_length_ratio=2, max_tip_length_to_length_ratio=0.1),
-                                    Arrow(bsc.output_bit_1.get_right(), destination.get_left(), buff=0.25, max_stroke_width_to_length_ratio=2, max_tip_length_to_length_ratio=0.1))
-
-        communication_system.add(encoding_box, decoding_box)
-        self.wait(1)
-        self.play(Transform(communication_system, VGroup(bsc.full_channel, source_arrows, destination_arrows, source.copy(), destination.copy()).shift(LEFT).scale(0.5)))
-        self.wait(1)
-        
-        radius=DEFAULT_SMALL_DOT_RADIUS
-        buffer=0.15
-        three_dots = VGroup(*[Dot(radius=radius*2/3, color=GREY) for _ in range(3)]).arrange(DOWN,buff=0.1)
-
-        def create_digits(l):
-            binary_digits = create_binary_digits(l)
-            binary_digits.sort(key=lambda x: x.count("1"))
-            tex_digits = [Tex(x).scale(0.7) for x in binary_digits]
-            if l < 4:
-                return VGroup(*tex_digits).arrange(DOWN, center=False, buff=buffer)
-            return VGroup(*(tex_digits[:6] + [three_dots] + tex_digits[-6:])).arrange(DOWN, center=False, buff=buffer)
-
-        self.play(ShowPassingFlash(source_arrows.copy().set_color(BLUE), time_width=0.7))
-        x_outcomes = create_digits(1).shift(1.5*UP)
-        x_outcomes.move_to(combine_positions(bsc.input_0_text.get_center(), x_outcomes.get_center(), [1, 0, 0]))
-        self.play(Transform(VGroup(bsc.input_0_text.copy(), bsc.input_1_text.copy()), x_outcomes, replace_mobject_with_target_in_scene=True))
-
-        self.play(ShowPassingFlash(bsc.arrows.copy().set_color(BLUE), time_width=0.7))
-        y_outcomes = x_outcomes.copy()
-        y_outcomes.move_to(combine_positions(bsc.output_1_text.get_center(), y_outcomes.get_center(), [1, 0, 0]))
-        self.play(Transform(VGroup(bsc.output_0_text.copy(), bsc.output_1_text.copy()), y_outcomes, replace_mobject_with_target_in_scene=True))
-        self.wait(1)
-        usage = Tex("$T = $", "1").next_to(x_outcomes, LEFT).shift(2*LEFT)
-        self.play(Create(usage))
-
-        for l in range(2, 5):
-            self.play(Transform(usage, Tex("$T = $", f"{l}").move_to(usage)))
-            self.play(ShowPassingFlash(source_arrows.copy().set_color(BLUE), time_width=0.7))
-            dir = x_outcomes.get_edge_center(UP)
-            x_outcomes = VGroup(x_outcomes, bsc.input_0_text.copy(), bsc.input_1_text.copy())
-            self.play(Transform(x_outcomes, create_digits(l).move_to(dir, aligned_edge=UP)))
-            self.play(ShowPassingFlash(bsc.arrows.copy().set_color(BLUE), time_width=0.7))
-            dir = y_outcomes.get_edge_center(UP)
-            y_outcomes = VGroup(y_outcomes, bsc.output_0_text.copy(), bsc.output_1_text.copy())
-            self.play(Transform(y_outcomes, create_digits(l).move_to(dir, aligned_edge=UP)))
-        self.wait(1)
-
-        binary_digits = create_binary_digits(7)
-        binary_digits.sort(key=lambda x: x.count("1"))
-        tex_digits = [Tex(x[:3], "...", x[-3:]).scale(0.7) for x in binary_digits]
-        long_message = VGroup(*(tex_digits[:6] + [three_dots] + tex_digits[-6:])).arrange(DOWN, center=False, buff=buffer)
-
-        self.play(Transform(usage, Tex("$T \\to \\infty$").move_to(usage)))
-        self.play(Transform(x_outcomes, long_message.copy().move_to(x_outcomes, aligned_edge=UP)))
-        self.play(Transform(y_outcomes, long_message.copy().move_to(y_outcomes, aligned_edge=UP)))
-        self.wait(1)
-        
-        dot_anims = []
-        for i in range(len(x_outcomes)):
-            if i != 6:
-                dot_anims.append(Transform(x_outcomes[i], Dot(radius=radius).move_to(x_outcomes[i])))
-                dot_anims.append(Transform(y_outcomes[i], Dot(radius=radius).move_to(y_outcomes[i])))
-
-        self.play(LaggedStart(*dot_anims))
-        self.wait(1)
-
-        probable_messages = Tex("$2^{T}$").next_to(usage, DOWN)
-        self.play(Transform(usage.copy(), probable_messages, replace_mobject_with_target_in_scene=True))
-
-        all_arrows = VGroup()
-        
-        causes_arrows = VGroup()
-        for i in range(13):
-            causes_arrows.add(Line(x_outcomes[0].get_center(), y_outcomes[i].get_center(), stroke_width=1))
-
-        self.play(LaggedStart(*[Create(c) for c in causes_arrows]))
-        all_arrows.add(causes_arrows)
-        self.wait(1)
-
-        error_free1 = Tex("$2^{R} = $", "$\\frac{}{}$").shift(2*RIGHT)
-        error_free2 = Tex("$2^{R} = $", "$\\frac{output\\ messages}{}$").move_to(error_free1, LEFT)
-        error_free3 = Tex("$2^{R} = $", "$\\frac{output\\ messages}{unique\\ messages}$").move_to(error_free2, LEFT)
-
-        self.play(Create(error_free1))
-        self.wait(1)
-        self.play(Transform(VGroup(error_free1, y_outcomes.copy()), error_free2, replace_mobject_with_target_in_scene=True))
-        self.wait(1)
-        self.play(Transform(VGroup(error_free2, causes_arrows.copy()), error_free3, replace_mobject_with_target_in_scene=True))
-        self.wait(1)
-
-        num_output = probable_messages.copy().next_to(causes_arrows, DOWN)
-        num_noised = probable_messages.copy().next_to(y_outcomes, DOWN)
-        self.play(Transform(causes_arrows.copy(), num_output, replace_mobject_with_target_in_scene=True))
-        self.play(Transform(y_outcomes.copy(), num_noised, replace_mobject_with_target_in_scene=True))
-
-        self.wait(1)
-        self.play(Transform(error_free3, Tex("$2^{R} = $", "$\\frac{2^{T}}{2^{T}}$").move_to(error_free3, LEFT)),
-                    FadeOut(num_output, num_noised))
-        self.wait(1)
-        self.play(Transform(error_free3, Tex("$2^{R} = $", "$\\frac{2^{T}}{2^{T}}$", "$ = 2^0$").move_to(error_free3, LEFT)))
-        self.wait(1)
-        self.play(Transform(error_free3, Tex("$2^{R} = $", "$\\frac{2^{T}}{2^{T}}$", "$ = 2^0$", "$ = 1$").move_to(error_free3, LEFT)))
-        self.wait(1)
-
-
-        uncreation = []
-        for i in range(12, 2, -1):
-            uncreation.append(Uncreate(causes_arrows[i]))
-
-        self.play(LaggedStart(*uncreation))
-
-        for i in range(12, 2, -1):
-            causes_arrows.remove(causes_arrows[i])
-
-        creation = []
-        for i in range(1,13):
-            if i == 6: continue
-            causes_arrows = VGroup()
-            for j in range(3):
-                idx = i+j if i<=6 else i-j
-                causes_arrows.add(Line(x_outcomes[i].get_center(), y_outcomes[idx].get_center(), stroke_width=1))
-                if idx == 6: break
-
-            creation.append(LaggedStart(*[Create(c) for c in causes_arrows]))
-            all_arrows.add(causes_arrows)
-        self.play(LaggedStart(*creation))
-        
-        uncreation = []
-        for i in range(11, 0, -1):
-            if i in [0, 3, 8, 11]: continue
-            uncreation.append(LaggedStart(*[Uncreate(a) for a in all_arrows[i]]))
-        self.play(LaggedStart(*uncreation))
-
-        for i in range(11, 0, -1):
-            if i in [0, 3, 8, 11]: continue
-            all_arrows.remove(all_arrows[i])
-        self.wait(1)
-
-        self.play(Transform(num_output, Tex("$2^{H(Y)T}$").move_to(num_output, LEFT+DOWN)),
-                 Transform(error_free3, Tex("$2^{R} = $", "$\\frac{2^{H(Y)T}}{2^{T}}$").move_to(error_free3, LEFT)))
-        self.play(Transform(num_noised, Tex("$2^{H(Y|X)T}$").move_to(num_noised, LEFT+DOWN)),
-                 Transform(error_free3, Tex("$2^{R} = $", "$\\frac{2^{H(Y)T}}{2^{H(Y|X)T}}$").move_to(error_free3, LEFT)))
-        self.wait(1)
-        self.play(Transform(error_free3, Tex("$2^{R} = $", "$2^{I(X;Y)T}$").move_to(error_free3, LEFT)))
-        self.wait(1)
 
 class Entry:
     def __init__(self, main_tex, subtexts = []):
