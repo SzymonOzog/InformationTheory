@@ -2750,11 +2750,30 @@ class TOC:
 
 class TableOfContents(VoiceoverScene):
     def construct(self):
-        self.set_speech_service(RecorderService())
+        self.set_speech_service(
+            RecorderService()
+        )
         toc = TOC()
+        contents = BulletedList("What it is", "Why should you care", "What this series will be ", "What this series won't be")
 
         with self.voiceover("Header") as trk:
             self.play(Write(toc.header.next_to(toc.entries[0].main, UP, aligned_edge=LEFT)))
+        rendered = []
+        for i, e in enumerate(contents):
+            print(e.get_tex_string())
+            self.wait(1)
+            with self.voiceover(e.get_tex_string()) as trk:
+                self.play(Write(e))
+                rendered.append(e)
+            if i == 1:
+                self.wait(1)
+                with self.voiceover(e.get_tex_string()+"2") as trk:
+                    pass
+
+        with self.voiceover("Mid") as trk:
+            self.wait(8)
+            self.play(*[Unwrite(e) for e in rendered])
+        
         for e in toc.entries:
             with self.voiceover(e.main.tex_string) as trk:
                 self.play(Write(e.main))
@@ -2764,10 +2783,5 @@ class TableOfContents(VoiceoverScene):
             self.wait(1)
             self.play(e.close())
             self.wait(1)
-
-
-class Test(Scene):
-    def construct(self):
-        x = Tex("$C=\\:$", "$x$")
-        self.add(x)
-        self.wait(2)
+        self.wait(3)
+        self.play(FadeOut(*[o for o in self.mobjects]))
