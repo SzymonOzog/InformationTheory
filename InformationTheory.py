@@ -408,8 +408,8 @@ from manim_voiceover.services.gtts import GTTSService
 class InformationContent(VoiceoverScene):
     def construct(self):
         self.set_speech_service(
-            # RecorderService()
-            GTTSService(transcription_model='base')
+            RecorderService(trim_buffer_start=500, trim_buffer_end=500)
+            # GTTSService(transcription_model='base')
         )
         toc = TOC()
 
@@ -536,7 +536,7 @@ class InformationContent(VoiceoverScene):
             self.play(Transform(extraction_2, extraction_3, replace_mobject_with_target_in_scene=True))
 
         with self.voiceover("""
-        And like this we have come to an equation <bookmark mark='1'/> for information, but there is one final tweak that we have to make,
+        , but there is <bookmark mark='1'/>one final tweak that we have to make,
         so far we have been only working with binary digits, so our logarithm had a base of two, let's just change it <bookmark mark='2'/> to an arbitrary one,
                             so that it can be used for any base of information.
             """) as trk:
