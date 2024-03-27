@@ -768,16 +768,16 @@ class BSC():
 class Entropy(VoiceoverScene):
     def construct(self):
         self.set_speech_service(
-            # RecorderService()
-            GTTSService(transcription_model='base')
+            RecorderService(trim_buffer_start=500, trim_buffer_end=500)
+            # GTTSService(transcription_model='base')
         )
         toc = TOC(1)
 
         with self.voiceover(
-            """Hello and welcome to episode 2 in our series on Information Theory
+            """Helo and welcome to episode 2 in our series on Information Theory
             In this episode we will introduce the most fundamental formula
             in information theory, which is <bookmark mark='1'/>
-            Entropy, we will describe what it means  
+            Entropy, we will explain what it means  
             and how do we use <bookmark mark='2'/>it to describe the level of uncertainty, surprise and information
             of a random variable"""
                             ) as trk:
@@ -813,8 +813,8 @@ class Entropy(VoiceoverScene):
         self.play(general_entropy_formula.animate.shift(3*UP))
 
         with self.voiceover(""" 
-        The classical example of a random variable is<bookmark mark='1'/> flipping a coin, there are 2 states,<bookmark mark='2'/> 
-        <bookmark mark='3'/>heads and tails and they are both equally probable
+        The classical example of a random variable is<bookmark mark='1'/> flipping a coin, there are 2 states<bookmark mark='2'/> 
+        heads and<bookmark mark='3'/> tails and they are both equally probable
             """) as trk:
             self.wait_until_bookmark("1")
             coin_flipping_text = Text("Flip a fair coin: Equally likely probabilities").shift(2*DOWN)
@@ -851,7 +851,7 @@ class Entropy(VoiceoverScene):
 
         with self.voiceover(""" 
         Another example that we can look at <bookmark mark='1'/>is picking a ball, imagine that someone throws <bookmark mark='2'/>a few balls of different colors
-        into a bag and picks one out at random, you know that there are more red balls than blue ones so the outcome 
+        into a bag and picks one out at random, you know that there are more blue balls than red ones so the outcome 
         should not be as surprising as when we flipped a fair coin 
             """) as trk:
         # Non equally likely probabilities
@@ -870,7 +870,7 @@ class Entropy(VoiceoverScene):
 
         with self.voiceover(""" 
         And after doing<bookmark mark='1'/> the math we can see that the outcome is smaller, the event is still random
-        but we are not as uncertain of the outcome since we know that the probability for picking a red ball is much higher.
+        but we are not as uncertain of the outcome since we know that the probability for picking a blue ball is much higher.
             """) as trk:
 
             entropy_formula_2 = Tex("$H(X) =$", "$-\\frac{7}{10} \cdot \log_2(\\frac{7}{10})$",
@@ -893,10 +893,9 @@ class Entropy(VoiceoverScene):
             self.play(FadeOut(entropy_formula_2), FadeOut(*balls), FadeOut(ball_text))
             self.wait_until_bookmark("1")
             binary_entropy_formula = Tex("$H_b(p) =$", "$-p \cdot \log_2(p_1)$", "$- (p_2) \cdot \log_2(p_2)$").shift(2*DOWN)
-            self.play(Transform(binary_entropy_formula, Tex("$H_b(p) =$", "$-p \cdot \log_2(p)$", "$- (1-p) \cdot \log_2(1-p)$").shift(2*DOWN)))
+            self.play(Transform(general_entropy_formula, binary_entropy_formula, replace_mobject_with_target_in_scene=True))
             self.wait_until_bookmark("2")
-            self.play(Write(binary_entropy_formula))
-
+            self.play(Transform(binary_entropy_formula, Tex("$H_b(p) =$", "$-p \cdot \log_2(p)$", "$- (1-p) \cdot \log_2(1-p)$").shift(2*DOWN)))
 
         # H(p) Chart
         axes = Axes(
@@ -947,7 +946,7 @@ class Entropy(VoiceoverScene):
             self.wait_until_bookmark("2")
             binary_entropy_formula.add_updater(lambda x: x.become(
                 Tex(f"$H_b({t.get_value():.2f}) =$", f"$-{t.get_value():.2f} \cdot \log_2({t.get_value():.2f})$", 
-                    f"$- (1-{t.get_value():.2f} \cdot \log_2(1-{t.get_value():.2f})$", f"$={bin_ent(t.get_value())}$").shift(2*DOWN)))
+                    f"$- ({(1-t.get_value()):.2f} \cdot \log_2({(1-t.get_value()):.2f})$", f"$={bin_ent(t.get_value())}$").shift(2*DOWN)))
             self.play(t.animate.set_value(0.5))
             self.play(Indicate(binary_entropy_formula[3]))
             # self.play(Transform(binary_entropy_formula, Tex("$H_b(0.5) =$", "$-0.5 \cdot \log_2(0.5)$", "$- (1-0.5) \cdot \log_2(1-0.5)$", "$=1$").shift(2*DOWN)))
@@ -985,10 +984,10 @@ class Entropy(VoiceoverScene):
 
 
         self.wait(1)
-        self.play(FadeOut(*balls, *new_balls, general_entropy_formula, updated_entropy_formula_2))
+        self.play(*[FadeOut(x) for x in self.mobjects])
         self.wait(1)
 
-        toc = TOC()
+        toc = TOC(1)
         toc.entries[0].main.animate.set_color(GREEN)
         with self.voiceover("""
         And this is where we will end the second episode  <bookmark mark='1'/>
