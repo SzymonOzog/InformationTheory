@@ -1085,8 +1085,8 @@ class TwoEventEntropy(VoiceoverScene):
     def construct(self):
 
         self.set_speech_service(
-            # RecorderService()
-            GTTSService(transcription_model='base')
+            RecorderService(trim_buffer_start=500, trim_buffer_end=500)
+            # GTTSService(transcription_model='base')
         )
         toc = TOC(2)
 
@@ -1202,13 +1202,13 @@ class TwoEventEntropy(VoiceoverScene):
         <bookmark mark='3'/> and blue shapes
             """) as trk:
             self.wait_until_bookmark("1")
-            current = VGroup(*[t.get_entries(x).copy() for x in [(3,2), (3,3), (3,4)]])
+            current = VGroup(*[t.get_entries(x).copy() for x in [(3,3), (3,4), (3,5)]])
             self.play(Transform(current, final_eq[1],replace_mobject_with_target_in_scene=True))
             self.wait_until_bookmark("2")
-            current = VGroup(*[t.get_entries(x).copy() for x in [(4,2), (4,3), (4,4)]])
+            current = VGroup(*[t.get_entries(x).copy() for x in [(4,2), (4,4), (4,5)]])
             self.play(Transform(current, final_eq[2],replace_mobject_with_target_in_scene=True))
             self.wait_until_bookmark("3")
-            current = VGroup(*[t.get_entries(x).copy() for x in [(5,2), (5,3), (5,4)]])
+            current = VGroup(*[t.get_entries(x).copy() for x in [(5,2), (5,3), (5,5)]])
             self.play(Transform(current, final_eq[3],replace_mobject_with_target_in_scene=True))
 
         old_formula = Tex("$H(X) =$", "$-\\sum\\limits_{x} p(x) \cdot \log_2\\left(p(x)\\right)$").move_to(formulas[0].get_corner(RIGHT), RIGHT)
@@ -1269,7 +1269,7 @@ class TwoEventEntropy(VoiceoverScene):
             self.play(Write(formulas[3][1:]))
             self.wait_until_bookmark("2")
             new_formula = Tex("$H(X|Y) =$", "$-\\sum\\limits_{x,y} p(x,y) \cdot \log_2\\left(p(x|y)\\right)$").move_to(formulas[3].get_corner(LEFT), LEFT)
-            self.play(TransformMatchingTex(formulas[3], new_formula))
+            self.play(Transform(formulas[3], new_formula))
         self.wait(1)
         
         final_eq = VGroup(*[
@@ -1315,11 +1315,11 @@ class TwoEventEntropy(VoiceoverScene):
             self.play(Transform(interm_eq, final_eq[0], replace_mobject_with_target_in_scene=True))
             self.wait_until_bookmark("2")
             self.play(Transform(interm_eq, final_eq[0], replace_mobject_with_target_in_scene=True))
-            current = VGroup(*[t.get_entries(x).copy() for x in [(3,2), (3,3), (3,4)]])
+            current = VGroup(*[t.get_entries(x).copy() for x in [(3,3), (3,4), (3,5)]])
             self.play(Transform(current, final_eq[1],replace_mobject_with_target_in_scene=True))
-            current = VGroup(*[t.get_entries(x).copy() for x in [(4,2), (4,3), (4,4)]])
+            current = VGroup(*[t.get_entries(x).copy() for x in [(4,2), (4,4), (4,5)]])
             self.play(Transform(current, final_eq[2],replace_mobject_with_target_in_scene=True))
-            current = VGroup(*[t.get_entries(x).copy() for x in [(5,2), (5,3), (5,4)]])
+            current = VGroup(*[t.get_entries(x).copy() for x in [(5,2), (5,3), (5,5)]])
             self.play(Transform(current, final_eq[3],replace_mobject_with_target_in_scene=True))
         self.wait(1)
         self.play(FadeOut(final_eq))
@@ -1335,9 +1335,9 @@ class TwoEventEntropy(VoiceoverScene):
             self.wait_until_bookmark("2")
             self.play(Write(formulas[4][1]))
         with self.voiceover("""
-        You can think about it this way, just as one bit of information means that we reduced our 
-        probability in half, one bit of mutual information, means that knowing the outcome of one event
-        eliminates half of the probability of the other one
+        You can think about it this way, just as one bit of information cuts down the space of possible events in half
+        one bit of mutual information, means that knowing the outcome of one event
+        eliminates cuts down the space of possible events for the other one in half
             """) as trk:
             pass
         self.play(Transform(formulas[4], arranged_formulas[4]))
