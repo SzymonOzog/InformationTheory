@@ -8,8 +8,8 @@ from random import random
 class CommunicationSystem(VoiceoverScene):
     def construct(self):
         self.set_speech_service(
-            # RecorderService()
-            GTTSService(transcription_model='base')
+            RecorderService(trim_buffer_start=500, trim_buffer_end=500)
+            # GTTSService(transcription_model='base')
         )
         toc = TOC(3)
 
@@ -85,7 +85,7 @@ class CommunicationSystem(VoiceoverScene):
 
 
         with self.voiceover("""
-        This is a case known as a noiseless channel,<bookmark mark='1'/>where there message is unchanged across all of the
+        This is a case known as a noiseless channel,<bookmark mark='1'/>where the message is unchanged across all of the
         steps along it's way
             """) as trk:
             self.wait_until_bookmark("1")
@@ -151,7 +151,7 @@ class CommunicationSystem(VoiceoverScene):
             """) as trk:
             self.wait_until_bookmark("1")
             for t in reversed(input_text):
-                self.play(Write(t))
+                self.play(Write(t), run_time=0.3)
         
         
         results = []
@@ -167,9 +167,9 @@ class CommunicationSystem(VoiceoverScene):
                     target = bsc.output_bit_0.get_center() if flip else bsc.output_bit_1.get_center()
                 resulting_bit = "0" if (target == bsc.output_bit_0.get_center()).all() else "1"
 
-                self.play(FadeOut(text.copy(), target_position=src))
+                self.play(FadeOut(text.copy(), target_position=src, run_time=0.5))
 
-                def animate(arrow): self.play(ShowPassingFlash(arrow.copy().set_color(BLUE), time_width=0.2))
+                def animate(arrow): self.play(ShowPassingFlash(arrow.copy().set_color(BLUE), time_width=0.2, run_time=0.5))
                 if resulting_bit == "0" and bit == "0":
                     animate(bsc.arrow_00)
                 elif resulting_bit == "1" and bit == "0":
@@ -180,7 +180,7 @@ class CommunicationSystem(VoiceoverScene):
                     animate(bsc.arrow_11)
 
                 result = Tex(resulting_bit, color=GREEN if resulting_bit == bit else RED).scale(0.7).next_to(destination, DOWN, aligned_edge=LEFT).shift((0.2*i)*RIGHT)
-                self.play(FadeIn(result, target_position=target))
+                self.play(FadeIn(result, target_position=target, run_time=0.5))
                 results.append(result)
         source_arrows = VGroup(Arrow(source.get_right(), bsc.input_bit_0.get_left(), buff=0.25, max_stroke_width_to_length_ratio=2, max_tip_length_to_length_ratio=0.1),
                             Arrow(source.get_right(), bsc.input_bit_1.get_left(), buff=0.25, max_stroke_width_to_length_ratio=2, max_tip_length_to_length_ratio=0.1))
