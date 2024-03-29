@@ -1460,12 +1460,11 @@ def probs_to_str(pr):
 
 class NoiselessChannelTheorem(VoiceoverScene, MovingCameraScene):
     def construct(self):
-
         self.set_speech_service(
-            # RecorderService()
-            GTTSService(transcription_model='base')
+            RecorderService(trim_buffer_start=500, trim_buffer_end=500)
+            # GTTSService(transcription_model='base')
         )
-        toc = TOC(3)
+        toc = TOC(4)
 
         with self.voiceover(
             """Hello and welcome to the fifth episode in our series on Information Theory
@@ -1627,12 +1626,12 @@ class NoiselessChannelTheorem(VoiceoverScene, MovingCameraScene):
             encodings = VGroup(*[Tex(x).scale(0.6).next_to(weather_conditions[i]) for i, x in enumerate(create_binary_digits(3))])
             self.play(Write(encodings))
         
-        def update_entropy(current_entropy, additional=None): 
+        def update_entropy(current_entropy, additional=None, run_time=0.5): 
             equality = '=' if current_entropy == 0 else '\\approxeq'
             old = VGroup(entropy)
             if additional != None:
                 old.add(additional)
-            self.play(Transform(old, Tex(f"$H{equality}{current_entropy:.2f}$").next_to(source, DOWN)))
+            self.play(Transform(old, Tex(f"$H{equality}{current_entropy:.2f}$").next_to(source, DOWN)), run_time=run_time)
         current_entropy = 0
         entropy_text = Tex("$H(X)=\\sum\\limits_{x}$","$p(x)$", "$\\cdot \\log_2($", "$\\frac{1}{p(x)}$", "$)$").shift(2*UP)
 
@@ -1654,16 +1653,16 @@ class NoiselessChannelTheorem(VoiceoverScene, MovingCameraScene):
             self.play(Write(written_probs))
             self.wait_until_bookmark("2")
             def transform_entropy(p): 
-                self.play(entropy_text.animate.become(Tex("$H(X)=\\sum\\limits_{x}$",f"${p}$", "$\\cdot \\log_2($", f"$\\frac{{1}}{{{p}}}$", "$)$").shift(2*UP)))
+                self.play(entropy_text.animate.become(Tex("$H(X)=\\sum\\limits_{x}$",f"${p}$", "$\\cdot \\log_2($", f"$\\frac{{1}}{{{p}}}$", "$)$").shift(2*UP)), run_time=0.5)
             for i,p in enumerate(probabilities):
                 self.play(written_probs[i].animate.set_color(GREEN))
-                self.play(FadeOut(written_probs[i].copy(), target_position=entropy_text.get_center()))
+                self.play(FadeOut(written_probs[i].copy(), target_position=entropy_text.get_center()), run_time=0.5)
                 transform_entropy(p)
                 partial = p*math.log2(1/p)
                 current_entropy+=(partial)
                 partial_text=Tex(f"$\\approxeq{partial:.2f}$").next_to(entropy_text)
-                self.play(Write(partial_text))
-                update_entropy(current_entropy, partial_text)
+                self.play(Write(partial_text), run_time=0.5)
+                update_entropy(current_entropy, partial_text, run_time=0.5)
         
         with self.voiceover("""
         You then use you outcome to calculate the possible rate <bookmark mark='1'/>at which you can send that information
