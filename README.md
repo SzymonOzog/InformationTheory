@@ -1,4 +1,4 @@
-Manim visualisations made for an Introduction to Information Theory.
+Manim visualisations made for an introduction to Information Theory.
 
 Watch at:
 
